@@ -37,7 +37,14 @@ const FontList: FC<Props> = ({ font, setFont }) => {
   if (!fonts) return <div>No fonts found</div>;
 
   return (
-    <>
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        gap: "1em",
+      }}
+    >
       <select
         value={font?.id || ""}
         onChange={(e) =>
@@ -45,7 +52,7 @@ const FontList: FC<Props> = ({ font, setFont }) => {
         }
       >
         <option value="" disabled>
-          Select an option
+          Select a typeface
         </option>
         {fonts.map((d) => (
           <option value={d.id} key={d.id}>
@@ -54,19 +61,22 @@ const FontList: FC<Props> = ({ font, setFont }) => {
         ))}
       </select>
       {font && (
-        <pre
-          style={{
-            maxHeight: 100,
-            overflow: "auto",
-            padding: "1em",
-            background: "rgb(250,250,250)",
-            borderRadius: "1em",
-          }}
-        >
-          {JSON.stringify(font, null, 2)}
-        </pre>
+        <details>
+          <summary>Font Metadata</summary>
+          <pre
+            style={{
+              maxHeight: 100,
+              overflow: "auto",
+              padding: "1em",
+              background: "rgb(250,250,250)",
+              borderRadius: "1em",
+            }}
+          >
+            {JSON.stringify(font, null, 2)}
+          </pre>
+        </details>
       )}
-    </>
+    </div>
   );
 };
 
