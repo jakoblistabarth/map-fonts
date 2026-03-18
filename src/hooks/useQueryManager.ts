@@ -71,7 +71,7 @@ export function useQueryManager(
         for (const table of tables) {
           try {
             options?.onStatusChange?.(`Loading ${table}...`);
-            const parquetUrl = `/data/${table}.parquet`;
+            const parquetUrl = `data/${table}.parquet`;
             console.log(`[${table}] Loading from: ${parquetUrl}`);
 
             // Use absolute URL to ensure file is accessible
