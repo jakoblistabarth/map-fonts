@@ -1,4 +1,4 @@
-import type { Font } from "../pages/api/fonts";
+import type { Font } from "./FontViewer";
 import { type FC } from "react";
 
 type Props = {
@@ -12,24 +12,27 @@ const FontSample: FC<Props> = ({ font }) => {
         No typeface selected.
       </div>
     );
-  const family = font.family.replace(/\s+/g, "+");
-  const variants = font.variants.reduce<{ italic: number[]; normal: number[] }>(
-    (acc, v) => {
-      const isItalic = v.includes("italic");
-      acc[isItalic ? "italic" : "normal"].push(
-        parseInt(v.replace(/^(regular|italic)$/, "400").replace("italic", "")),
-      );
+  if (!font.fonts) return <>no fonts found</>;
+  const variants = Object.entries(font.fonts).reduce<{
+    italic: number[];
+    normal: number[];
+  }>(
+    (acc, [key, values]) => {
+      if (!values) return acc;
+      const normalizedWeight = parseInt(key.replace("i", ""));
+      if (normalizedWeight < 100 || normalizedWeight > 900) return acc;
+      const isItalic = key.endsWith("i");
+      acc[isItalic ? "italic" : "normal"].push(normalizedWeight);
       return acc;
     },
-    { normal: [], italic: [] },
+    { italic: [], normal: [] },
   );
-  const variantStrings = Object.values(variants)
-    .map((arr, i) =>
-      arr.length > 0 ? arr.map((v) => `${i},${v}`).join(";") : null,
-    )
-    .filter(Boolean);
-  console.log({ variants, family: font.family });
-  const href = `https://fonts.googleapis.com/css2?family=${family}:ital,wght@${variantStrings.join(";")}&display=swap`;
+  const variantStrings = [
+    ...variants.normal.map((w) => `0,${w}`),
+    ...variants.italic.map((w) => `1,${w}`),
+  ];
+  const encodedFamily = encodeURIComponent(font.family);
+  const href = `https://fonts.googleapis.com/css2?family=${encodedFamily}:ital,wght@${variantStrings.join(";")}&display=swap`;
 
   return (
     <div>

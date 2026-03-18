@@ -1,8 +1,34 @@
-import type { Font } from "../pages/api/fonts";
 import { useState } from "react";
-import FontList from "./FontList";
 import FontSample from "./FontSample";
 import DemoMap from "./DemoMap";
+import FontFinder from "./FontFinder";
+
+export type Font = {
+  family: string;
+  displayName?: string;
+  category: string[];
+  stroke: string[];
+  classifications: string;
+  size: number;
+  subsets: string[];
+  fonts: Record<
+    string,
+    { thickness: number; slant: number; width: number; lineheight: number }
+  >;
+  axes: Record<
+    string,
+    { tag: string; min: number; max: number; defaultvalue: number }
+  >;
+  designers: string[];
+  lastModified: Date;
+  dateAdded: Date;
+  popularity: number;
+  trending: number;
+  defaultSort: number;
+  primaryScript: string;
+  primaryLanguage: string;
+  isBrandFont: boolean;
+};
 
 const FontViewer = () => {
   const [font, setFont] = useState<Font | null>(null);
@@ -17,7 +43,7 @@ const FontViewer = () => {
     >
       <DemoMap font={font} />
       <FontSample font={font} />
-      <FontList font={font} setFont={setFont} />
+      <FontFinder font={font} setFont={setFont} />
     </div>
   );
 };

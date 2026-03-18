@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useMap } from "react-map-gl/maplibre";
-import type { Font } from "../pages/api/fonts";
+import type { Font } from "./FontViewer";
 
 export default function ApplyFont({ font }: { font: Font | null }) {
   const { current: mapRef } = useMap();
@@ -13,7 +13,7 @@ export default function ApplyFont({ font }: { font: Font | null }) {
       /label|name|poi|shield/.test(l),
     );
     layersWithText.forEach((l) =>
-      map.setLayoutProperty(l, "text-font", [font.family]),
+      map.setLayoutProperty(l, "text-font", [`'${font.family}'`]),
     );
   }, [mapRef, font]);
   return null;

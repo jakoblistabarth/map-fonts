@@ -1,0 +1,16 @@
+{
+  "servers": {
+    "mcp-server-motherduck": {
+      "command": "uvx",
+      "args": [
+        "mcp-server-motherduck",
+        "--db-path",
+        ":memory:",
+        "--read-write",
+        "--allow-switch-databases"
+      ],
+      "type": "stdio"
+    }
+  },
+  "inputs": []
+}

@@ -1,24 +1,37 @@
 {
-  "name": "",
+  "name": "Map Fonts",
   "type": "module",
   "version": "0.0.1",
   "engines": {
     "node": ">=22.12.0"
   },
   "scripts": {
+    "prepare:duckdb-wasm": "pnpm dlx tsx ./scripts/copy-duckdb-bundle.ts",
+    "prepare:database": "pnpm dlx tsx ./scripts/write-parquet-files.ts",
+    "check:database": "pnpm dlx tsx ./scripts/check-database.ts",
+    "setup": "pnpm run prepare:duckdb-wasm && pnpm run check:database",
+    "predev": "pnpm run setup",
     "dev": "astro dev",
     "build": "astro build",
+    "prebuild": "pnpm run setup",
     "preview": "astro preview",
     "astro": "astro"
   },
   "dependencies": {
+    "@astrojs/check": "^0.9.8",
     "@astrojs/react": "^5.0.0",
-    "@types/react": "^19.2.14",
-    "@types/react-dom": "^19.2.3",
+    "@duckdb/duckdb-wasm": "1.33.1-dev20.0",
+    "@duckdb/node-api": "1.5.0-r.1",
     "astro": "^6.0.2",
     "maplibre-gl": "^5.20.0",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
-    "react-map-gl": "^8.1.0"
+    "react-map-gl": "^8.1.0",
+    "typescript": "^5.9.3"
+  },
+  "devDependencies": {
+    "@types/node": "^25.5.0",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3"
   }
 }

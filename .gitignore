@@ -1,6 +1,10 @@
 # build output
 dist/
 
+# local data and duckdb bundle
+public/data/
+public/duckdb/
+
 # generated types
 .astro/
 
