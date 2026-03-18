@@ -24,7 +24,7 @@ FROM
     metadata m
     CROSS JOIN UNNEST(m.familyMetadataList) AS t (fm);
 
-CREATE OR REPLACE TABLE maesured_values AS
+CREATE OR REPLACE TABLE measured_values AS
 WITH
     quant AS (
         SELECT
@@ -38,8 +38,8 @@ WITH
 FROM
     quant;
 
-COPY tags TO './public/data/tags.parquet' (FORMAT PARQUET);
+COPY tags TO './public/data/tags.json';
 
-COPY family_metadata TO './public/data/family_metadata.parquet' (FORMAT PARQUET);
+COPY family_metadata TO './public/data/family_metadata.json';
 
-COPY maesured_values TO './public/data/maesured_values.parquet' (FORMAT PARQUET);
+COPY measured_values TO './public/data/measured_values.json';

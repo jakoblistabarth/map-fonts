@@ -1,7 +1,0 @@
-# Disable compression for parquet files - they're already binary compressed
-# and DuckDB-WASM needs byte-range requests to work correctly
-[[headers]]
-for = "/data/*.parquet"
-[headers.values]
-Content-Encoding = ""
-Cache-Control = "public, max-age=31536000, immutable"

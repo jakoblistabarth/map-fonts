@@ -11,7 +11,7 @@ async function main(): Promise<void> {
     fs.mkdirSync(dataDir, { recursive: true });
   }
 
-  console.log(`Creating database and exporting Parquet files...`);
+  console.log(`Creating database and exporting tables...`);
 
   // Create a DuckDB instance
   const instance = await DuckDBInstance.create(":memory:");
@@ -40,7 +40,7 @@ async function main(): Promise<void> {
     }
 
     console.log(`\n✓ Successfully executed ${successCount} statements`);
-    console.log(`✓ Parquet files exported to ${dataDir}`);
+    console.log(`✓ Table files exported to ${dataDir}`);
 
     conn.closeSync();
   } catch (err: any) {

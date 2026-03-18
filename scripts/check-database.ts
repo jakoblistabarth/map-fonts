@@ -2,14 +2,14 @@ import fs from "fs";
 import path from "path";
 
 /**
- * Check if parquet files exist, and only run prepare:database if needed
+ * Check if table files exist, and only run prepare:database if needed
  */
 async function checkAndPrepare(): Promise<void> {
   const dataDir = path.join(process.cwd(), "public", "data");
   const requiredFiles = [
-    "tags.parquet",
-    "family_metadata.parquet",
-    "maesured_values.parquet",
+    "tags.json",
+    "family_metadata.json",
+    "measured_values.json",
   ];
 
   // Check if all files exist
@@ -24,12 +24,12 @@ async function checkAndPrepare(): Promise<void> {
 
   if (allExist) {
     console.log(
-      "\n✓ All Parquet files already exist. Skipping database creation.",
+      "\n✓ All table files already exist. Skipping database creation.",
     );
     return;
   }
 
-  console.log("\n⚠ Some Parquet files are missing. Creating database...\n");
+  console.log("\n⚠ Some table files are missing. Creating database...\n");
 
   // Run the prepare:database script
   const { execSync } = await import("child_process");

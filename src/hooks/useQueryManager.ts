@@ -14,7 +14,7 @@ export interface QueryManager {
 
 /**
  * Hook that manages a persistent DuckDB connection for the component's lifetime
- * Loads parquet files once on mount, and provides a query function
+ * Loads table files once on mount, and provides a query function
  */
 export function useQueryManager(
   options?: UseQueryManagerOptions,
@@ -68,22 +68,22 @@ export function useQueryManager(
           console.warn("[DuckDB] httpfs already loaded or unavailable:", e);
         }
 
-        // Load parquet files
-        options?.onStatusChange?.("Loading Parquet files...");
+        // Load table files
+        options?.onStatusChange?.("Loading table files...");
 
-        const tables = ["tags", "family_metadata", "maesured_values"];
+        const tables = ["tags", "family_metadata", "measured_values"];
         for (const table of tables) {
           try {
             options?.onStatusChange?.(`Loading ${table}...`);
-            const parquetUrl = `data/${table}.parquet`;
-            console.log(`[${table}] Loading from: ${parquetUrl}`);
+            const tableFileUrl = `data/${table}.json`;
+            console.log(`[${table}] Loading from: ${tableFileUrl}`);
 
             // Use absolute URL to ensure file is accessible
-            const fullUrl = new URL(parquetUrl, window.location.href).href;
+            const fullUrl = new URL(tableFileUrl, window.location.href).href;
             console.log(`[${table}] Full URL: ${fullUrl}`);
 
             await newConn.query(
-              `CREATE OR REPLACE TABLE ${table} AS SELECT * FROM read_parquet('${fullUrl}')`,
+              `CREATE OR REPLACE TABLE ${table} AS SELECT * FROM read_json('${fullUrl}')`,
             );
             console.log(`[${table}] Created table successfully`);
           } catch (err: any) {
