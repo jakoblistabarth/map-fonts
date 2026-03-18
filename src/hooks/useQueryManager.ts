@@ -1,3 +1,4 @@
+import type { DuckDBBundles } from "@duckdb/duckdb-wasm";
 import { useEffect, useState } from "react";
 
 interface UseQueryManagerOptions {
@@ -32,11 +33,14 @@ export function useQueryManager(
         const duckdb: any = duckdbModule.default ?? duckdbModule;
 
         // Use manual bundles and let duckdb select the right one for this environment
-        const MANUAL_BUNDLES: any = {
+        const MANUAL_BUNDLES: DuckDBBundles = {
           mvp: {
-            mainModule: "/duckdb/duckdb.wasm",
-            mainWorker: "/duckdb/duckdb.worker.js",
-            pthreadWorker: "/duckdb/duckdb.pthread.worker.js",
+            mainModule: "/duckdb/duckdb-mvp.wasm",
+            mainWorker: "/duckdb/duckdb-browser-mvp.worker.js",
+          },
+          eh: {
+            mainModule: "/duckdb/duckdb-eh.wasm",
+            mainWorker: "/duckdb/duckdb-browser-eh.worker.js",
           },
         };
 
