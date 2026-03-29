@@ -7,9 +7,9 @@ import path from "path";
 async function checkAndPrepare(): Promise<void> {
   const dataDir = path.join(process.cwd(), "public", "data");
   const requiredFiles = [
-    "tags.json",
-    "family_metadata.json",
-    "measured_values.json",
+    "tags.parquet",
+    "family_metadata.parquet",
+    "measured_values.parquet",
   ];
 
   // Check if all files exist

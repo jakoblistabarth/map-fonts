@@ -75,7 +75,7 @@ export function useQueryManager(
         for (const table of tables) {
           try {
             options?.onStatusChange?.(`Loading ${table}...`);
-            const tableFileUrl = `data/${table}.json`;
+            const tableFileUrl = `data/${table}.parquet`;
             console.log(`[${table}] Loading from: ${tableFileUrl}`);
 
             // Use absolute URL to ensure file is accessible
@@ -83,7 +83,7 @@ export function useQueryManager(
             console.log(`[${table}] Full URL: ${fullUrl}`);
 
             await newConn.query(
-              `CREATE OR REPLACE TABLE ${table} AS SELECT * FROM read_json('${fullUrl}')`,
+              `CREATE OR REPLACE TABLE ${table} AS FROM '${fullUrl}'`,
             );
             console.log(`[${table}] Created table successfully`);
           } catch (err: any) {

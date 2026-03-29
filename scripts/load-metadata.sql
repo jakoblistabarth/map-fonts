@@ -38,8 +38,8 @@ WITH
 FROM
     quant;
 
-COPY tags TO './public/data/tags.json';
+COPY tags TO './public/data/tags.parquet';
 
-COPY family_metadata TO './public/data/family_metadata.json';
+COPY family_metadata TO './public/data/family_metadata.parquet';
 
-COPY measured_values TO './public/data/measured_values.json';
+COPY measured_values TO './public/data/measured_values.parquet';
