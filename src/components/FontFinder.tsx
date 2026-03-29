@@ -79,6 +79,11 @@ const FontFinder: FC<Props> = ({ font, setFont }) => {
     });
   };
 
+  const countAvailableFonts = (fonts: Font["fonts"]) => {
+    if (!fonts) return 0;
+    return Object.values(fonts).filter(Boolean).length;
+  };
+
   const queryByTag = async () => {
     // Get all selected tags from all categories, flattened
     const selectedTagArray: string[] = [];
@@ -93,7 +98,7 @@ const FontFinder: FC<Props> = ({ font, setFont }) => {
       if (selectedTagArray.length === 0) {
         // Show all families if no tags selected
         result = await manager.query(`
-          SELECT DISTINCT fm.family, fm.category, fm.fonts
+          SELECT DISTINCT fm.family, fm.category, fm.fonts, fm.axes
           FROM family_metadata fm
           ORDER BY fm.family
         `);
@@ -106,11 +111,11 @@ const FontFinder: FC<Props> = ({ font, setFont }) => {
           .join(", ");
 
         result = await manager.query(`
-          SELECT DISTINCT fm.family, fm.category, fm.fonts
+          SELECT DISTINCT fm.family, fm.category, fm.fonts, fm.axes
           FROM family_metadata fm
           INNER JOIN tags t ON t.family = fm.family
           WHERE t.tag IN (${tagList}) AND t.weight > 60
-          GROUP BY fm.family, fm.category, fm.fonts
+          GROUP BY fm.family, fm.category, fm.fonts, fm.axes
           HAVING COUNT(DISTINCT t.tag) = ${tagCount}
           ORDER BY fm.family
         `);
@@ -236,12 +241,13 @@ const FontFinder: FC<Props> = ({ font, setFont }) => {
                       >
                         Family
                       </th>
+                      <th></th>
                       <th
                         style={{
                           padding: "0.5rem",
                         }}
                       >
-                        Category
+                        № of fonts
                       </th>
                       <th></th>
                     </tr>
@@ -251,7 +257,12 @@ const FontFinder: FC<Props> = ({ font, setFont }) => {
                       <tr key={idx} style={{ borderBottom: "1px solid #eee" }}>
                         <td style={{ padding: "0.5rem" }}>{family.family}</td>
                         <td style={{ padding: "0.5rem" }}>
-                          {family.category || "-"}
+                          {family.axes.length > 0 && (
+                            <span style={{ fontFamily: "monospace" }}>VAR</span>
+                          )}
+                        </td>
+                        <td style={{ padding: "0.5rem" }}>
+                          {countAvailableFonts(family.fonts)}
                         </td>
                         <td>
                           <Button
@@ -269,7 +280,7 @@ const FontFinder: FC<Props> = ({ font, setFont }) => {
                                   : "black",
                             }}
                           >
-                            Use font
+                            Use
                           </Button>
                         </td>
                       </tr>

@@ -15,10 +15,7 @@ export type Font = {
     string,
     { thickness: number; slant: number; width: number; lineheight: number }
   >;
-  axes: Record<
-    string,
-    { tag: string; min: number; max: number; defaultvalue: number }
-  >;
+  axes: { tag: string; min: number; max: number; defaultvalue: number }[];
   designers: string[];
   lastModified: Date;
   dateAdded: Date;
