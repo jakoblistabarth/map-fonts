@@ -33,14 +33,16 @@ export function useQueryManager(
         const duckdb: any = duckdbModule.default ?? duckdbModule;
 
         // Use manual bundles and let duckdb select the right one for this environment
+        const baseUrl = import.meta.env.BASE_URL;
+        const basePath = baseUrl.endsWith('/') ? baseUrl : baseUrl + '/';
         const MANUAL_BUNDLES: DuckDBBundles = {
           mvp: {
-            mainModule: "/duckdb/duckdb-mvp.wasm",
-            mainWorker: "/duckdb/duckdb-browser-mvp.worker.js",
+            mainModule: `${basePath}duckdb/duckdb-mvp.wasm`,
+            mainWorker: `${basePath}duckdb/duckdb-browser-mvp.worker.js`,
           },
           eh: {
-            mainModule: "/duckdb/duckdb-eh.wasm",
-            mainWorker: "/duckdb/duckdb-browser-eh.worker.js",
+            mainModule: `${basePath}duckdb/duckdb-eh.wasm`,
+            mainWorker: `${basePath}duckdb/duckdb-browser-eh.worker.js`,
           },
         };
 
