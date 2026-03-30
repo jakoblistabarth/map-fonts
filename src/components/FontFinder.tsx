@@ -138,7 +138,7 @@ const FontFinder: FC<Props> = ({ font, setFont }) => {
     <div
       style={{
         display: "grid",
-        gridTemplateColumns: "1fr 1fr",
+        gridTemplateColumns: "2fr 1fr",
         gap: "2em",
         padding: "1em",
       }}
@@ -241,15 +241,9 @@ const FontFinder: FC<Props> = ({ font, setFont }) => {
                       >
                         Family
                       </th>
-                      <th></th>
-                      <th
-                        style={{
-                          padding: "0.5rem",
-                        }}
-                      >
-                        № of fonts
-                      </th>
-                      <th></th>
+                      <th></th> {/* variable font indicator */}
+                      <th></th> {/* no. of fonts */}
+                      <th></th> {/* button */}
                     </tr>
                   </thead>
                   <tbody>
@@ -258,11 +252,59 @@ const FontFinder: FC<Props> = ({ font, setFont }) => {
                         <td style={{ padding: "0.5rem" }}>{family.family}</td>
                         <td style={{ padding: "0.5rem" }}>
                           {family.axes.length > 0 && (
-                            <span style={{ fontFamily: "monospace" }}>VAR</span>
+                            <div
+                              style={{
+                                fontSize: "x-small",
+                                display: "flex",
+                                width: "fit-content",
+                                alignItems: "center",
+                                borderRadius: "1em",
+                                gap: ".5em",
+                                border: "1px solid lightgrey",
+                                boxSizing: "border-box",
+                              }}
+                            >
+                              <span
+                                style={{
+                                  fontWeight: 700,
+                                  paddingLeft: ".5em",
+                                }}
+                              >
+                                VAR
+                              </span>
+                              <span
+                                style={{
+                                  border: "1px solid lightgrey",
+                                  width: "1.5em",
+                                  aspectRatio: "1",
+                                  borderRadius: "50%",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  margin: "-1px -1px -1px 0",
+                                }}
+                              >
+                                {family.axes.length}
+                              </span>
+                            </div>
                           )}
                         </td>
-                        <td style={{ padding: "0.5rem" }}>
-                          {countAvailableFonts(family.fonts)}
+                        <td>
+                          <span
+                            style={{
+                              fontSize: "x-small",
+                              fontWeight: 900,
+                              background: "lightgrey",
+                              borderRadius: "50%",
+                              aspectRatio: "1",
+                              width: "1.75em",
+                              display: "inline-flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                            }}
+                          >
+                            {countAvailableFonts(family.fonts)}
+                          </span>
                         </td>
                         <td>
                           <Button

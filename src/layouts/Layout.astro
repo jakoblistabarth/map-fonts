@@ -1,3 +1,7 @@
+---
+import { Font } from "astro:assets";
+---
+
 <!doctype html>
 <html lang="en">
   <head>
@@ -7,6 +11,7 @@
     <link rel="icon" href="/favicon.ico" />
     <meta name="generator" content={Astro.generator} />
     <title>Map Fonts</title>
+    <Font cssVariable="--font-sans" />
   </head>
   <body>
     <slot />
@@ -17,6 +22,6 @@
   html,
   body {
     margin: 0;
-    font-family: sans-serif;
+    font-family: var(--font-sans);
   }
 </style>
