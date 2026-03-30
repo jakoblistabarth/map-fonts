@@ -34,7 +34,7 @@ export function useQueryManager(
 
         // Use manual bundles and let duckdb select the right one for this environment
         const baseUrl = import.meta.env.BASE_URL;
-        const basePath = baseUrl.endsWith('/') ? baseUrl : baseUrl + '/';
+        const basePath = baseUrl.endsWith("/") ? baseUrl : baseUrl + "/";
         const MANUAL_BUNDLES: DuckDBBundles = {
           mvp: {
             mainModule: `${basePath}duckdb/duckdb-mvp.wasm`,
@@ -60,16 +60,6 @@ export function useQueryManager(
         console.log("[DuckDB] Creating connection...");
         const newConn = await newDb.connect();
 
-        // Ensure httpfs is loaded
-        console.log("[DuckDB] Initializing httpfs extension...");
-        try {
-          await newConn.query("INSTALL httpfs");
-          await newConn.query("LOAD httpfs");
-          console.log("[DuckDB] httpfs loaded successfully");
-        } catch (e) {
-          console.warn("[DuckDB] httpfs already loaded or unavailable:", e);
-        }
-
         // Load table files
         options?.onStatusChange?.("Loading table files...");
 
@@ -77,15 +67,29 @@ export function useQueryManager(
         for (const table of tables) {
           try {
             options?.onStatusChange?.(`Loading ${table}...`);
-            const tableFileUrl = `data/${table}.parquet`;
+            const tableFileUrl = `${basePath}data/${table}.parquet`;
             console.log(`[${table}] Loading from: ${tableFileUrl}`);
 
-            // Use absolute URL to ensure file is accessible
-            const fullUrl = new URL(tableFileUrl, window.location.href).href;
-            console.log(`[${table}] Full URL: ${fullUrl}`);
+            // Fetch the parquet file as a blob
+            const response = await fetch(tableFileUrl);
+            if (!response.ok) {
+              throw new Error(
+                `Failed to fetch ${table}.parquet: ${response.status} ${response.statusText}`,
+              );
+            }
 
+            const arrayBuffer = await response.arrayBuffer();
+
+            // Register the buffer as a file in DuckDB's virtual filesystem
+            const fileName = `/${table}.parquet`;
+            await newDb.registerFileBuffer(
+              fileName,
+              new Uint8Array(arrayBuffer),
+            );
+
+            // Load from the registered file
             await newConn.query(
-              `CREATE OR REPLACE TABLE ${table} AS FROM '${fullUrl}'`,
+              `CREATE OR REPLACE TABLE ${table} AS FROM '${fileName}'`,
             );
             console.log(`[${table}] Created table successfully`);
           } catch (err: any) {
