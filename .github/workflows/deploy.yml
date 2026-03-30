@@ -18,14 +18,15 @@ jobs:
         runs-on: ubuntu-latest
         steps:
             - name: Checkout your repository using git
-              uses: actions/checkout@v4
+              uses: actions/checkout@v6
+
             - name: Install, build, and upload your site
-              uses: withastro/action@v2
+              uses: withastro/action@v6
               env:
                   SITE_URL: ${{ vars.SITE_URL }}
                   BASE_URL: ${{ vars.BASE_URL }}
               with:
-                  node-version: "22.22.1"
+                  node-version: "22"
 
     deploy:
         needs: build
