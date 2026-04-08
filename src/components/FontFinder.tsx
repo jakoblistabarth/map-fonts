@@ -1,4 +1,13 @@
-import { type FC, useState, useEffect } from "react";
+import React, {
+  type FC,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  useTransition,
+} from "react";
+import { List } from "react-window";
+import { useLazyFont } from "../hooks/useLazyFont";
 import { useQueryManager } from "../hooks/useQueryManager";
 import type { Font } from "./FontViewer";
 import Button from "./button";
@@ -10,6 +19,110 @@ type Props = {
   setFont: (font: Font | null) => void;
 };
 
+// Row component for virtual list - memoized to prevent re-renders
+const FontRow = React.memo((props: any) => {
+  // react-window passes index, style, and any additional rowProps
+  const { index, style, families, font, setFont, countAvailableFonts } = props;
+  const family = families[index];
+  const [isVisible, setIsVisible] = useState(false);
+  const rowRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(([entry]) => {
+      setIsVisible(entry.isIntersecting);
+    });
+
+    if (rowRef.current) observer.observe(rowRef.current);
+    return () => observer.disconnect();
+  }, []);
+
+  useLazyFont(family, isVisible, font);
+
+  return (
+    <div
+      ref={rowRef}
+      style={{
+        ...style,
+        display: "flex",
+        alignItems: "center",
+        gap: "0.5rem",
+        borderBottom: "1px solid #eee",
+        padding: "0.5rem",
+        boxSizing: "border-box",
+      }}
+    >
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <span style={{ fontWeight: 400, fontFamily: family.family }}>
+          {family.family}
+        </span>
+      </div>
+      <div>
+        {family.axes.length > 0 && (
+          <div
+            style={{
+              fontSize: "smaller",
+              display: "flex",
+              width: "fit-content",
+              alignItems: "center",
+              paddingLeft: ".75em",
+              borderRadius: "1em",
+              gap: ".5em",
+              border: "1px solid lightgrey",
+              marginTop: "0.25rem",
+            }}
+          >
+            <span style={{ fontWeight: 700 }}>VAR</span>
+            <span
+              style={{
+                fontSize: "smaller",
+                border: "1px solid lightgrey",
+                width: "1.5em",
+                aspectRatio: "1",
+                borderRadius: "50%",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                margin: "-1px -1px -1px 0",
+              }}
+            >
+              {family.axes.length}
+            </span>
+          </div>
+        )}
+      </div>
+
+      <div style={{ textAlign: "right" }}>
+        <span
+          style={{
+            fontSize: "x-small",
+            fontWeight: 900,
+            background: "lightgrey",
+            borderRadius: "50%",
+            aspectRatio: "1",
+            width: "1.75em",
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          {countAvailableFonts(family.fonts)}
+        </span>
+      </div>
+
+      <Button
+        onClick={() => setFont(family)}
+        style={{
+          background: family.family === font?.family ? "#007bff" : "#fff",
+          color: family.family === font?.family ? "white" : "black",
+          whiteSpace: "nowrap",
+        }}
+      >
+        Use
+      </Button>
+    </div>
+  );
+});
+
 const FontFinder: FC<Props> = ({ font, setFont }) => {
   const manager = useQueryManager({
     onStatusChange: (status) => setStatus(status),
@@ -18,6 +131,7 @@ const FontFinder: FC<Props> = ({ font, setFont }) => {
   const [status, setStatus] = useState("Initializing...");
   const [families, setFamilies] = useState<Font[]>([]);
   const [loading, setLoading] = useState(false);
+  const [isPending, startTransition] = useTransition();
   const [selectedTags, setSelectedTags] = useState<Record<string, Set<string>>>(
     {},
   );
@@ -79,10 +193,10 @@ const FontFinder: FC<Props> = ({ font, setFont }) => {
     });
   };
 
-  const countAvailableFonts = (fonts: Font["fonts"]) => {
+  const countAvailableFonts = useCallback((fonts: Font["fonts"]) => {
     if (!fonts) return 0;
     return Object.values(fonts).filter(Boolean).length;
-  };
+  }, []);
 
   const queryByTag = async () => {
     // Get all selected tags from all categories, flattened
@@ -125,7 +239,9 @@ const FontFinder: FC<Props> = ({ font, setFont }) => {
         );
       }
 
-      setFamilies(result);
+      startTransition(() => {
+        setFamilies(result);
+      });
     } catch (err: any) {
       setStatus(`Error: ${err.message}`);
       console.error("Query error:", err);
@@ -212,123 +328,50 @@ const FontFinder: FC<Props> = ({ font, setFont }) => {
               <h3>Results ({families.length})</h3>
               <div
                 style={{
-                  maxHeight: "500px",
-                  overflowY: "auto",
                   border: "1px solid #ccc",
                   borderRadius: "4px",
+                  overflow: "hidden",
+                  display: "flex",
+                  flexDirection: "column",
+                  height: "500px",
+                  width: "100%",
                 }}
               >
-                <table
+                <div
                   style={{
-                    width: "100%",
-                    borderCollapse: "collapse",
+                    display: "flex",
+                    gap: "0.5rem",
+                    borderBottom: "1px solid #ccc",
+                    background: "#f0f0f0",
+                    padding: "0.5rem",
+                    fontWeight: "bold",
+                    position: "sticky",
+                    top: 0,
+                    zIndex: 1,
                   }}
                 >
-                  <thead>
-                    <tr
-                      style={{
-                        background: "#f0f0f0",
-                        position: "sticky",
-                        top: 0,
-                        borderBottom: "1px solid #ccc",
-                        textAlign: "left",
-                      }}
-                    >
-                      <th
-                        style={{
-                          padding: "0.5rem",
-                        }}
-                      >
-                        Family
-                      </th>
-                      <th></th> {/* variable font indicator */}
-                      <th></th> {/* no. of fonts */}
-                      <th></th> {/* button */}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {families.map((family, idx) => (
-                      <tr key={idx} style={{ borderBottom: "1px solid #eee" }}>
-                        <td style={{ padding: "0.5rem" }}>{family.family}</td>
-                        <td style={{ padding: "0.5rem" }}>
-                          {family.axes.length > 0 && (
-                            <div
-                              style={{
-                                fontSize: "x-small",
-                                display: "flex",
-                                width: "fit-content",
-                                alignItems: "center",
-                                borderRadius: "1em",
-                                gap: ".5em",
-                                border: "1px solid lightgrey",
-                                boxSizing: "border-box",
-                              }}
-                            >
-                              <span
-                                style={{
-                                  fontWeight: 700,
-                                  paddingLeft: ".5em",
-                                }}
-                              >
-                                VAR
-                              </span>
-                              <span
-                                style={{
-                                  border: "1px solid lightgrey",
-                                  width: "1.5em",
-                                  aspectRatio: "1",
-                                  borderRadius: "50%",
-                                  display: "flex",
-                                  alignItems: "center",
-                                  justifyContent: "center",
-                                  margin: "-1px -1px -1px 0",
-                                }}
-                              >
-                                {family.axes.length}
-                              </span>
-                            </div>
-                          )}
-                        </td>
-                        <td>
-                          <span
-                            style={{
-                              fontSize: "x-small",
-                              fontWeight: 900,
-                              background: "lightgrey",
-                              borderRadius: "50%",
-                              aspectRatio: "1",
-                              width: "1.75em",
-                              display: "inline-flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                            }}
-                          >
-                            {countAvailableFonts(family.fonts)}
-                          </span>
-                        </td>
-                        <td>
-                          <Button
-                            onClick={() => {
-                              setFont(family);
-                            }}
-                            style={{
-                              background:
-                                family.family == font?.family
-                                  ? "#007bff"
-                                  : "#fff",
-                              color:
-                                family.family == font?.family
-                                  ? "white"
-                                  : "black",
-                            }}
-                          >
-                            Use
-                          </Button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                  <div style={{ flex: 1 }}>Family</div>
+                </div>
+                <div
+                  style={{
+                    flex: 1,
+                    width: "100%",
+                    overflow: "auto",
+                  }}
+                >
+                  {React.createElement(List as any, {
+                    height: 430,
+                    rowCount: families.length,
+                    rowHeight: 50,
+                    rowComponent: FontRow,
+                    rowProps: {
+                      families,
+                      font,
+                      setFont,
+                      countAvailableFonts,
+                    },
+                  })}
+                </div>
               </div>
             </section>
           ) : (
