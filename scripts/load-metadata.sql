@@ -43,3 +43,17 @@ COPY tags TO './public/data/tags.parquet';
 COPY family_metadata TO './public/data/family_metadata.parquet';
 
 COPY measured_values TO './public/data/measured_values.parquet';
+
+WITH
+    expressive AS (
+        FROM
+            tags
+        WHERE
+            tag_category = 'Expressive'
+    )
+FROM
+    (
+        PIVOT expressive ON tag USING COALESCE(MAX(weight), 50)
+        GROUP BY
+            family
+    );

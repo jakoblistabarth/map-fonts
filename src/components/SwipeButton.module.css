@@ -1,0 +1,25 @@
+.swipeButton {
+  background-color: var(--button-color);
+  width: 100px;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  border: none;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.5s ease;
+
+  &:hover {
+    background-color: color-mix(in srgb, var(--button-color) 100%, black 20%);
+  }
+
+  &.yes {
+    --button-color: rgb(140, 220, 119);
+  }
+
+  &.no {
+    --button-color: rgb(230, 120, 20);
+  }
+}

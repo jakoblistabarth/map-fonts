@@ -97,8 +97,20 @@ export function useQueryManager(
             options?.onStatusChange?.(`Error loading ${table}: ${err.message}`);
           }
         }
-
         options?.onStatusChange?.("Ready! Database loaded with all tables.");
+
+        // create vector indices for faster querying
+        const sqlUrl = `${basePath}vector-search.sql`;
+        const sqlResponse = await fetch(sqlUrl);
+        const sqlText = await sqlResponse.text();
+
+        // Split by semicolons and execute each statement
+        const statements = sqlText.split(";").filter((s) => s.trim());
+        for (const statement of statements) {
+          if (statement.trim()) {
+            await newConn.query(statement);
+          }
+        }
 
         setDb(newDb);
         setConn(newConn);
@@ -125,11 +137,16 @@ export function useQueryManager(
   const query = async (sql: string, params?: any[]) => {
     if (!conn) throw new Error("Database not ready");
     try {
-      const statement = await conn.prepare(sql);
-      const result = params
-        ? await statement.query(...params)
-        : await statement.query();
-      await statement.close();
+      let result;
+      if (params && params.length > 0) {
+        // Use prepared statement for parameterized queries
+        const statement = await conn.prepare(sql);
+        result = await statement.query(...params);
+        await statement.close();
+      } else {
+        // Use direct query for non-parameterized queries (required for PIVOT and other complex statements)
+        result = await conn.query(sql);
+      }
       return result.toArray ? result.toArray() : result;
     } catch (err: any) {
       console.error("DuckDB query failed", { sql, params, err });

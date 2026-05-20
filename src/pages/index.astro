@@ -1,8 +1,12 @@
 ---
-import FontViewer from "../components/FontViewer";
+import SwipeView from "../components/SwipeView";
 import Layout from "../layouts/Layout.astro";
 ---
 
 <Layout>
-  <FontViewer client:load />
+  <div
+    style="display: flex; flex-direction: column; gap: 1em; align-items: center; height: 100dvh; justify-content: center;"
+  >
+    <SwipeView client:load />
+  </div>
 </Layout>
