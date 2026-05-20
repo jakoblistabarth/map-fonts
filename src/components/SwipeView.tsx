@@ -53,6 +53,9 @@ const SwipeView: FC = ({}) => {
         gap: "1em",
       }}
     >
+      <div>
+        {currentFont + 1}/{preSelectedFamilies.length}
+      </div>
       <div
         style={{
           width: "500px",
@@ -110,7 +113,14 @@ const SwipeView: FC = ({}) => {
         </SwipeButton>
       </div>
       Liked Fonts
-      <ul>
+      <ul
+        style={{
+          display: "flex",
+          gap: "1em",
+          listStyleType: "none",
+          padding: 0,
+        }}
+      >
         {likedFonts.map(({ family }) => (
           <li key={family}>{family}</li>
         ))}
