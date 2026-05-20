@@ -46,7 +46,7 @@ SELECT
     weight
     ORDER BY
       tag
-  )::float[20] AS tags
+  )::float[21] AS tags
 FROM
   tag_family_matrix
 GROUP BY
