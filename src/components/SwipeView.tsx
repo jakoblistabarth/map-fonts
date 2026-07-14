@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type FC } from "react";
+import mapEurope from "../assets/map_europe.png";
 import { useLazyFont } from "../hooks/useLazyFont";
 import { useQueryManager } from "../hooks/useQueryManager";
 import type { Font } from "./ExpertModeView";
@@ -62,8 +63,8 @@ const SwipeView: FC = ({}) => {
       </div>
       <div
         style={{
-          width: "500px",
-          height: "200px",
+          width: "400px",
+          height: "600px",
           boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)",
           borderRadius: "1em",
           margin: "0 auto",
@@ -72,10 +73,33 @@ const SwipeView: FC = ({}) => {
           justifyContent: "center",
           fontSize: "1.5em",
           fontFamily: preSelectedFamilies.at(currentFont)?.family,
+          position: "relative",
+          overflow: "hidden",
         }}
       >
-        {!manager.isReady && <Skeleton />}
-        {preSelectedFamilies.at(currentFont)?.family}
+        <img
+          src={mapEurope}
+          alt="map"
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            width: "100%",
+            height: "100%",
+            objectFit: "cover",
+            zIndex: 1,
+          }}
+        />
+        <div
+          style={{
+            position: "relative",
+            zIndex: 2,
+            textAlign: "center",
+          }}
+        >
+          {!manager.isReady && <Skeleton />}
+          {preSelectedFamilies.at(currentFont)?.family}
+        </div>
       </div>
       <div style={{ display: "flex", gap: "0.5em" }}>
         <SwipeButton
