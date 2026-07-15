@@ -20,25 +20,30 @@ WITH
     WHERE
       tag_category = 'Expressive'
   ),
+  -- collapse any duplicate (family, tag) rows into one weight
+  expressive_weights AS (
+    SELECT
+      family,
+      tag,
+      AVG(weight) AS weight -- TODO: check whether avg is the right way to collapse tags with multiple weights
+    FROM
+      tags
+    WHERE
+      tag_category = 'Expressive'
+    GROUP BY
+      family,
+      tag
+  ),
   tag_family_matrix AS (
     SELECT
       f.family,
       t.tag,
-      COALESCE(tgs.weight, 50) AS weight
+      COALESCE(w.weight, 50) AS weight
     FROM
       all_families f
       CROSS JOIN all_tags t
-      LEFT JOIN (
-        SELECT
-          family,
-          tag,
-          weight
-        FROM
-          tags
-        WHERE
-          tag_category = 'Expressive'
-      ) tgs ON f.family = tgs.family
-      AND t.tag = tgs.tag
+      LEFT JOIN expressive_weights w ON f.family = w.family
+      AND t.tag = w.tag
   )
 SELECT
   family,
@@ -46,7 +51,7 @@ SELECT
     weight
     ORDER BY
       tag
-  )::float[21] AS tags
+  )::float[20] AS tags
 FROM
   tag_family_matrix
 GROUP BY
