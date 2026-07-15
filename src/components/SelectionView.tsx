@@ -3,25 +3,22 @@ import { useLazyFont } from "../hooks/useLazyFont";
 import type { Font } from "./FontViewer";
 
 type Props = {
-  selectedFont: Font | null;
   likedFonts: Font[];
   recommendedFonts: Font[];
 };
 
 type PreviewCardProps = {
   font: Font;
-  selectedFont: Font | null;
   label: string;
   compact?: boolean;
 };
 
 const PreviewCard: FC<PreviewCardProps> = ({
   font,
-  selectedFont,
   label,
   compact = false,
 }) => {
-  useLazyFont(font, true, selectedFont);
+  useLazyFont(font, true);
 
   return (
     <div
@@ -63,13 +60,7 @@ const PreviewCard: FC<PreviewCardProps> = ({
   );
 };
 
-const SelectionView: FC<Props> = ({
-  selectedFont,
-  likedFonts,
-  recommendedFonts,
-}) => {
-  const featuredFont = selectedFont ?? likedFonts.at(-1) ?? null;
-
+const SelectionView: FC<Props> = ({ likedFonts, recommendedFonts }) => {
   return (
     <div
       style={{
@@ -89,32 +80,6 @@ const SelectionView: FC<Props> = ({
         }}
       >
         <h2 style={{ margin: 0, fontSize: "1.05rem", fontWeight: 500 }}>
-          Selected font
-        </h2>
-        {featuredFont ? (
-          <PreviewCard
-            font={featuredFont}
-            selectedFont={featuredFont}
-            label="Picked from your swipes"
-          />
-        ) : (
-          <div
-            style={{
-              padding: "1rem",
-              borderRadius: "1.25rem",
-              background: "#f4f4f4",
-              color: "#666",
-            }}
-          >
-            Swipe a few fonts to unlock your selection.
-          </div>
-        )}
-      </section>
-
-      <section
-        style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}
-      >
-        <h2 style={{ margin: 0, fontSize: "1.05rem", fontWeight: 500 }}>
           You liked these typefaces
         </h2>
         <div
@@ -130,11 +95,10 @@ const SelectionView: FC<Props> = ({
                 key={font.family}
                 style={{
                   borderRadius: "999px",
-                  background: "#f7e39f",
+                  background: "#ffebab",
                   padding: "0.65rem 1rem",
                   fontFamily: font.family,
                   fontSize: "1.05rem",
-                  boxShadow: "0 6px 16px rgba(0, 0, 0, 0.08)",
                 }}
               >
                 {font.family}
@@ -164,7 +128,6 @@ const SelectionView: FC<Props> = ({
               <PreviewCard
                 key={font.family}
                 font={font}
-                selectedFont={featuredFont}
                 label="Recommended"
                 compact
               />

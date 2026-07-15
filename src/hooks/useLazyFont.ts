@@ -33,7 +33,7 @@ export const useLazyFont = (
 
     // Remove any existing stylesheet for this font
     const existing = document.getElementById(styleId);
-    if (existing) existing.remove();
+    if (existing) return;
 
     // Create new link element
     const link = document.createElement("link");
@@ -43,12 +43,5 @@ export const useLazyFont = (
 
     // Add to document head
     document.head.appendChild(link);
-
-    return () => {
-      // Cleanup: remove stylesheet only if this font is not currently selected
-      if (selectedFont?.family === font.family) return;
-      const cleanup = document.getElementById(styleId);
-      if (cleanup) cleanup.remove();
-    };
-  }, [font, shouldLoad, selectedFont]);
+  }, [font, shouldLoad]);
 };
