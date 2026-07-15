@@ -8,7 +8,7 @@ import type { Font } from "../components/ExpertModeView";
  * @param selectedFont The currently selected font, used to determine if the stylesheet should be removed on cleanup.
  */
 export const useLazyFont = (
-  font: Font,
+  font: Font | null,
   shouldLoad: boolean,
   selectedFont: Font | null = null,
 ) => {
