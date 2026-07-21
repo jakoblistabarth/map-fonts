@@ -1,7 +1,12 @@
+-- This script sets up the vector search extension and creates a table for font families with their associated expressive tag vectors.
+--
+-- Install the vector search extension if it's not already installed. This is necessary for performing vector similarity searches.
 INSTALL vss;
 
+-- Load the extension
 LOAD vss;
 
+-- Create the families_vectors table
 CREATE OR REPLACE TABLE families_vectors AS
 WITH
   all_tags AS (
@@ -62,6 +67,7 @@ CREATE INDEX idx ON families_vectors USING HNSW (tags)
 WITH
   (metric = 'cosine');
 
+-- This query finds the 10 most similar font families to 'Roboto' based on their expressive tag vectors. It needs to be adapted to use the current user preference vector as second argument of the array_distance function.
 -- FROM
 --   families_vectors
 -- ORDER BY

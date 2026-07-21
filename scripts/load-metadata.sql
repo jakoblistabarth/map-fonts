@@ -1,3 +1,5 @@
+-- This script loads metadata from the Google Fonts repository and creates tables for tags, family metadata, and measured values.
+-- These tables are then exported to Parquet files to be consumed by DuckDB WASM in the browser for efficient querying and analysis.
 CREATE OR REPLACE TABLE tags AS
 WITH
     raw_tags AS (
@@ -43,17 +45,3 @@ COPY tags TO './public/data/tags.parquet';
 COPY family_metadata TO './public/data/family_metadata.parquet';
 
 COPY measured_values TO './public/data/measured_values.parquet';
-
-WITH
-    expressive AS (
-        FROM
-            tags
-        WHERE
-            tag_category = 'Expressive'
-    )
-FROM
-    (
-        PIVOT expressive ON tag USING COALESCE(MAX(weight), 50)
-        GROUP BY
-            family
-    );
