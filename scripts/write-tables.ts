@@ -23,7 +23,9 @@ async function main(): Promise<void> {
 
     // Execute the SQL statements
     console.log("Executing SQL loader...");
+    // TODO: make this naive parsing more robust, e.g., by using a proper SQL parser library
     const statements = sql
+      .replace(/--.*$/gm, "")
       .split(";")
       .map((s) => s.trim())
       .filter((s) => s.length > 0 && !s.startsWith("--"));
