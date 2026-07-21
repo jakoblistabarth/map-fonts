@@ -1,6 +1,6 @@
 import Map from "react-map-gl/maplibre";
 import "maplibre-gl/dist/maplibre-gl.css";
-import { type Font } from "./FontViewer";
+import { type Font } from "./ExpertModeView";
 import { type FC } from "react";
 import ApplyFont from "./ApplyFont";
 

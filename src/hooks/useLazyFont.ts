@@ -1,6 +1,12 @@
 import { useEffect } from "react";
-import type { Font } from "../components/FontViewer";
+import type { Font } from "../components/ExpertModeView";
 
+/**
+ * Custom hook to lazily load a font's stylesheet when it becomes visible in the viewport.
+ * @param font The font object containing family and variants information.
+ * @param shouldLoad Boolean indicating whether the font should be loaded (e.g., when it is visible).
+ * @param selectedFont The currently selected font, used to determine if the stylesheet should be removed on cleanup.
+ */
 export const useLazyFont = (
   font: Font,
   shouldLoad: boolean,

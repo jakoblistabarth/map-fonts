@@ -54,7 +54,7 @@ export function useQueryManager(
         const newDb = new duckdb.AsyncDuckDB(logger, worker);
 
         console.log("[DuckDB] Instantiating with WASM module...");
-        // Pass pthreadWorker as second arg so the runtime can wire threads if available
+        // Pass pthreadWorker as second argument so the runtime can wire threads if available
         await newDb.instantiate(bundle.mainModule, bundle.pthreadWorker);
 
         console.log("[DuckDB] Creating connection...");
@@ -99,7 +99,7 @@ export function useQueryManager(
         }
         options?.onStatusChange?.("Ready! Database loaded with all tables.");
 
-        // create vector indices for faster querying
+        // Create vector indices for faster querying
         const sqlUrl = `${basePath}vector-search.sql`;
         const sqlResponse = await fetch(sqlUrl);
         const sqlText = await sqlResponse.text();

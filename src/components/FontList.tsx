@@ -1,129 +1,32 @@
 import React, {
   type FC,
+  memo,
   useCallback,
   useEffect,
-  useRef,
   useState,
   useTransition,
 } from "react";
 import { List } from "react-window";
-import { useLazyFont } from "../hooks/useLazyFont";
 import { useQueryManager } from "../hooks/useQueryManager";
-import type { Font } from "./FontViewer";
-import Button from "./button";
+import type { Font } from "./ExpertModeView";
+import FontListRow from "./FontListRow";
+import TagList from "./TagList";
 
-type TagCategory = Record<string, string[]>;
+export type TagCategory = Record<string, string[]>;
+export type SelectedTags = Record<string, Set<string>>;
 
 type Props = {
   font: Font | null;
   setFont: (font: Font | null) => void;
 };
 
-// Row component for virtual list - memoized to prevent re-renders
-const FontRow = React.memo((props: any) => {
-  // react-window passes index, style, and any additional rowProps
-  const { index, style, families, font, setFont, countAvailableFonts } = props;
-  const family = families[index];
-  const [isVisible, setIsVisible] = useState(false);
-  const rowRef = useRef<HTMLDivElement>(null);
+const FontListRowMemo = memo(FontListRow);
 
-  useEffect(() => {
-    const observer = new IntersectionObserver(([entry]) => {
-      setIsVisible(entry.isIntersecting);
-    });
-
-    if (rowRef.current) observer.observe(rowRef.current);
-    return () => observer.disconnect();
-  }, []);
-
-  useLazyFont(family, isVisible, font);
-
-  return (
-    <div
-      ref={rowRef}
-      style={{
-        ...style,
-        display: "flex",
-        alignItems: "center",
-        gap: "0.5rem",
-        borderBottom: "1px solid #eee",
-        padding: "0.5rem",
-        boxSizing: "border-box",
-      }}
-    >
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <span style={{ fontWeight: 400, fontFamily: family.family }}>
-          {family.family}
-        </span>
-      </div>
-      <div>
-        {family.axes.length > 0 && (
-          <div
-            style={{
-              fontSize: "smaller",
-              display: "flex",
-              width: "fit-content",
-              alignItems: "center",
-              paddingLeft: ".75em",
-              borderRadius: "1em",
-              gap: ".5em",
-              border: "1px solid lightgrey",
-              marginTop: "0.25rem",
-            }}
-          >
-            <span style={{ fontWeight: 700 }}>VAR</span>
-            <span
-              style={{
-                fontSize: "smaller",
-                border: "1px solid lightgrey",
-                width: "1.5em",
-                aspectRatio: "1",
-                borderRadius: "50%",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                margin: "-1px -1px -1px 0",
-              }}
-            >
-              {family.axes.length}
-            </span>
-          </div>
-        )}
-      </div>
-
-      <div style={{ textAlign: "right" }}>
-        <span
-          style={{
-            fontSize: "x-small",
-            fontWeight: 900,
-            background: "lightgrey",
-            borderRadius: "50%",
-            aspectRatio: "1",
-            width: "1.75em",
-            display: "inline-flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          {countAvailableFonts(family.fonts)}
-        </span>
-      </div>
-
-      <Button
-        onClick={() => setFont(family)}
-        style={{
-          background: family.family === font?.family ? "#007bff" : "#fff",
-          color: family.family === font?.family ? "white" : "black",
-          whiteSpace: "nowrap",
-        }}
-      >
-        Use
-      </Button>
-    </div>
-  );
-});
-
-const FontFinder: FC<Props> = ({ font, setFont }) => {
+/**
+ * Component displays a list of font families filtered by selected tags.
+ * It uses react-window for efficient rendering of large lists.
+ */
+const FontList: FC<Props> = ({ font, setFont }) => {
   const manager = useQueryManager({
     onStatusChange: (status) => setStatus(status),
   });
@@ -261,61 +164,11 @@ const FontFinder: FC<Props> = ({ font, setFont }) => {
     >
       <div>
         {manager.isReady ? (
-          <>
-            <section style={{ marginBottom: "2rem" }}>
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
-                  gap: ".5em",
-                }}
-              >
-                {Object.entries(tagsByCategory).map(([category, tags]) => (
-                  <div
-                    key={category}
-                    style={{
-                      padding: ".5rem",
-                      border: "1px solid #ddd",
-                      borderRadius: "4px",
-                    }}
-                  >
-                    <h3
-                      style={{
-                        fontSize: "1em",
-                        marginTop: 0,
-                      }}
-                    >
-                      {category}
-                    </h3>
-                    <div
-                      style={{
-                        display: "flex",
-                        flexWrap: "wrap",
-                        gap: ".25em",
-                      }}
-                    >
-                      {tags.map((tag) => {
-                        const isSelected =
-                          selectedTags[category]?.has(tag) || false;
-                        return (
-                          <Button
-                            key={tag}
-                            onClick={() => toggleTag(category, tag)}
-                            style={{
-                              background: isSelected ? "#007bff" : "#fff",
-                              color: isSelected ? "white" : "black",
-                            }}
-                          >
-                            {tag}
-                          </Button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </section>
-          </>
+          <TagList
+            tagsByCategory={tagsByCategory}
+            selectedTags={selectedTags}
+            toggleTag={toggleTag}
+          />
         ) : (
           <p>Loading database...</p>
         )}
@@ -363,7 +216,7 @@ const FontFinder: FC<Props> = ({ font, setFont }) => {
                     height: 430,
                     rowCount: families.length,
                     rowHeight: 50,
-                    rowComponent: FontRow,
+                    rowComponent: FontListRowMemo,
                     rowProps: {
                       families,
                       font,
@@ -383,4 +236,4 @@ const FontFinder: FC<Props> = ({ font, setFont }) => {
   );
 };
 
-export default FontFinder;
+export default FontList;

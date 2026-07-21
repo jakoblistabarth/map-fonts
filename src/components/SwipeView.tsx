@@ -1,15 +1,19 @@
 import { useEffect, useRef, useState, type FC } from "react";
 import { useLazyFont } from "../hooks/useLazyFont";
 import { useQueryManager } from "../hooks/useQueryManager";
-import type { Font } from "./FontViewer";
+import type { Font } from "./ExpertModeView";
 import SwipeButton from "./SwipeButton";
 import Skeleton from "./Skeleton";
 
+/**
+ * Component displays a list of font families as deck of cards for the user to swipe through.
+ */
 const SwipeView: FC = ({}) => {
   const [status, setStatus] = useState("idle");
   const manager = useQueryManager({
     onStatusChange: (status) => setStatus(status),
   });
+  //TODO: clean up state management
   const [fontTagMatrix, setFontTagMatrix] = useState<any>([]);
   const [currentFont, setCurrentFont] = useState<number>(0);
   const [likedFonts, setLikedFonts] = useState<Font[]>([]);

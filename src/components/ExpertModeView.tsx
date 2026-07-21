@@ -1,7 +1,7 @@
 import { useState } from "react";
 import FontSample from "./FontSample";
 import DemoMap from "./DemoMap";
-import FontFinder from "./FontFinder";
+import FontList from "./FontList";
 
 export type Font = {
   family: string;
@@ -27,7 +27,8 @@ export type Font = {
   isBrandFont: boolean;
 };
 
-const FontViewer = () => {
+/** Component displays the expert mode interface for font selection and preview based on metrics (and tags?). */
+const ExpertModeView = () => {
   const [font, setFont] = useState<Font | null>(null);
   return (
     <div
@@ -40,9 +41,9 @@ const FontViewer = () => {
     >
       <DemoMap font={font} />
       <FontSample font={font} />
-      <FontFinder font={font} setFont={setFont} />
+      <FontList font={font} setFont={setFont} />
     </div>
   );
 };
 
-export default FontViewer;
+export default ExpertModeView;

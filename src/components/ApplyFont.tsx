@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useMap } from "react-map-gl/maplibre";
-import type { Font } from "./FontViewer";
+import type { Font } from "./ExpertModeView";
 
 export default function ApplyFont({ font }: { font: Font | null }) {
   const { current: mapRef } = useMap();
@@ -11,11 +11,11 @@ export default function ApplyFont({ font }: { font: Font | null }) {
 
     // Wait for font to be loaded by browser before MapLibre tries to render it
     const loadAndApplyFont = async () => {
-      // wait for font to appear in document.fonts (stylesheet is loading asynchronously)
+      // Wait for font to appear in document.fonts (stylesheet is loading asynchronously)
       const fontFamily = font.family;
       let fontAppeared = false;
       let waitAttempts = 0;
-      const maxWaitAttempts = 100; // ~5 seconds with 50ms intervals
+      const maxWaitAttempts = 100; // ~5 seconds with 50 milliseconds intervals
 
       while (!fontAppeared && waitAttempts < maxWaitAttempts) {
         // Check if font appears in document.fonts

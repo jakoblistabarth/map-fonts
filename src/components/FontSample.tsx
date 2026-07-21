@@ -1,10 +1,14 @@
 import { type FC, useEffect } from "react";
-import type { Font } from "./FontViewer";
+import type { Font } from "./ExpertModeView";
 
 type Props = {
   font: Font | null;
 };
 
+/**
+ * Component displays a sample text using the selected font.
+ * If no font is selected, it shows a placeholder message.
+ */
 const FontSample: FC<Props> = ({ font }) => {
   if (!font)
     return (
@@ -18,7 +22,7 @@ const FontSample: FC<Props> = ({ font }) => {
   return (
     <div>
       <span id="sample" style={{ fontFamily: font.family, fontSize: "2rem" }}>
-        Map Labels in {font.family}.
+        Map Labels set in "{font.family}".
       </span>
     </div>
   );
