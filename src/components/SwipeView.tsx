@@ -126,19 +126,13 @@ const pickRecommendations = (
   fonts: Font[],
   excludedFamilies: Set<string>,
   count: number,
-) =>   useEffect(() => {
-    if (manager.isReady && !hasLoadedRef.current) {
-      hasLoadedRef.current = true;
-      manager
-        .query("FROM families_vectors WHERE family IN ")
-        .then((result) => {
-          setAllFonts(result);
-          setDeckFonts(shuffle(result));
-        })
-        .catch((error) => console.error("Error loading families:", error));
-    }
-  }, [manager.isReady]);
+) => {
+  const candidates = shuffle(
+    fonts.filter((font) => !excludedFamilies.has(font.family)),
+  );
 
+  return candidates.slice(0, count);
+};
 
 /**
  * Component displays a list of font families as deck of cards for the user to swipe through.
