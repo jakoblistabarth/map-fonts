@@ -6,6 +6,7 @@ import {
   type FC,
 } from "react";
 import mapEurope from "../assets/map_europe.png";
+import heartIcon from "../assets/heart.svg";
 import { useLazyFont } from "../hooks/useLazyFont";
 import { useQueryManager } from "../hooks/useQueryManager";
 import type { Font } from "./ExpertModeView";
@@ -120,17 +121,24 @@ const createMapLabels = (): MapLabel[] => {
 
 const getLabelKey = (font: Font) => font.family;
 
+// implement here the font recommendation logic
 const pickRecommendations = (
   fonts: Font[],
   excludedFamilies: Set<string>,
   count: number,
-) => {
-  const candidates = shuffle(
-    fonts.filter((font) => !excludedFamilies.has(font.family)),
-  );
+) =>   useEffect(() => {
+    if (manager.isReady && !hasLoadedRef.current) {
+      hasLoadedRef.current = true;
+      manager
+        .query("FROM families_vectors WHERE family IN ")
+        .then((result) => {
+          setAllFonts(result);
+          setDeckFonts(shuffle(result));
+        })
+        .catch((error) => console.error("Error loading families:", error));
+    }
+  }, [manager.isReady]);
 
-  return candidates.slice(0, count);
-};
 
 /**
  * Component displays a list of font families as deck of cards for the user to swipe through.
@@ -659,8 +667,8 @@ const SwipeView: FC = ({}) => {
           <div style={{ display: "flex", gap: "0.75rem" }}>
             <SwipeButton type="no" onClick={() => triggerSwipe("no")}>
               <svg
-                width={20}
-                height={20}
+                width={40}
+                height={40}
                 viewBox="0 0 10 10"
                 strokeLinejoin="round"
                 strokeLinecap="round"
@@ -684,16 +692,7 @@ const SwipeView: FC = ({}) => {
               </svg>
             </SwipeButton>
             <SwipeButton type="yes" onClick={() => triggerSwipe("yes")}>
-              <svg width={20} height={20} viewBox="0 0 10 10">
-                <path
-                  d="M1 4 L4 7 L9 1"
-                  stroke="white"
-                  strokeWidth="2"
-                  strokeLinejoin="round"
-                  strokeLinecap="round"
-                  fill="none"
-                />
-              </svg>
+              <img src={heartIcon.src} alt="Heart" width={50} height={50} />
             </SwipeButton>
           </div>
         </div>

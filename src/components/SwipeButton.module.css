@@ -16,10 +16,10 @@
   }
 
   &.yes {
-    --button-color: rgb(140, 220, 119);
+    --button-color: rgb(111, 197, 207);
   }
 
   &.no {
-    --button-color: rgb(230, 120, 20);
+    --button-color: rgb(216, 97, 97);
   }
 }
