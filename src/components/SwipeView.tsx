@@ -36,8 +36,7 @@ type ExitingCard = {
   phase: "start" | "exiting";
 };
 
-const FIRST_UNLOCK_COUNT = 10;
-const RECOMMENDATION_COUNT = 4;
+const FIRST_UNLOCK_COUNT = 1;
 const TOP_SPACER_HEIGHT = "12.5rem";
 const SWIPE_THRESHOLD = 110;
 const STACK_GAP = 18;
@@ -121,19 +120,6 @@ const createMapLabels = (): MapLabel[] => {
 
 const getLabelKey = (font: Font) => font.family;
 
-// implement here the font recommendation logic
-const pickRecommendations = (
-  fonts: Font[],
-  excludedFamilies: Set<string>,
-  count: number,
-) => {
-  const candidates = shuffle(
-    fonts.filter((font) => !excludedFamilies.has(font.family)),
-  );
-
-  return candidates.slice(0, count);
-};
-
 /**
  * Component displays a list of font families as deck of cards for the user to swipe through.
  */
@@ -170,6 +156,7 @@ const SwipeView: FC = ({}) => {
     startY: 0,
   });
 
+  // Set deck and allFonts once the query manager is ready, but only once per mount.
   useEffect(() => {
     if (manager.isReady && !hasLoadedRef.current) {
       hasLoadedRef.current = true;
@@ -192,21 +179,82 @@ const SwipeView: FC = ({}) => {
   const nextFont = deckLength > 1 ? deckFonts[nextIndex] : null;
   const thirdFont = deckLength > 2 ? deckFonts[thirdIndex] : null;
 
+  // Update recommendations whenever the deck changes, the current font changes, or the liked fonts change.
   useEffect(() => {
-    if (!allFonts.length || !currentFont) {
-      setRecommendations([]);
-      return;
-    }
+    const loadRecommendations = async () => {
+      if (!allFonts.length || !currentFont || !likedFonts.length) {
+        setRecommendations([]);
+        return;
+      }
 
-    const excluded = new Set<string>();
+      // TODO:
+      // Get average vector of liked fonts (GROUP BY)
+      // Common Table Expression (CTE) to calculate average vector of liked fonts
+      // Then use that average vector to find the closest fonts in the families_vectors table
+      if (manager.isReady && !hasLoadedRef.current) return;
+      const likedFamilies = likedFonts
+        .map((font) => `'${font.family}'`)
+        .join(", ");
 
-    if (currentFont) excluded.add(currentFont.family);
-    likedFonts.forEach((font) => excluded.add(font.family));
+      console.log("Liked families:", likedFamilies);
 
-    setRecommendations(
-      pickRecommendations(allFonts, excluded, RECOMMENDATION_COUNT),
-    );
+      const recommendedFamilies = await manager.query(
+        `WITH
+          exploded AS (
+            SELECT
+              generate_subscripts(tags::DOUBLE[], 1) AS idx,
+              unnest(tags::DOUBLE[]) AS val
+            FROM
+              families_vectors
+            WHERE
+              family IN (${likedFamilies})
+          ),
+          idx_avg AS (
+            SELECT
+              idx,
+              avg(val) AS avg_val
+            FROM
+              exploded
+            GROUP BY
+              idx
+          ),
+          average_vector AS (
+            SELECT
+              list(avg_val ORDER BY idx) AS vector
+            FROM
+              idx_avg
+          )
+        SELECT
+          family_metadata.*
+        FROM
+          families_vectors
+          JOIN family_metadata USING (family)
+          CROSS JOIN average_vector
+        WHERE
+          family NOT IN (${likedFamilies})
+        ORDER BY
+          list_distance(tags, average_vector.vector) ASC
+        LIMIT
+          4;
+        `,
+      );
+
+      // TODO join the query result with the family_metadata table to get the full font objects instead of just the family names
+
+      console.log("Recommended families:", recommendedFamilies);
+
+      const excluded = new Set<string>();
+
+      if (currentFont) excluded.add(currentFont.family);
+      likedFonts.forEach((font) => excluded.add(font.family));
+
+      setRecommendations(recommendedFamilies);
+    };
+
+    loadRecommendations();
   }, [allFonts, currentFont, likedFonts, swipeCount]);
+
+  console.log(recommendations.map((font) => font.toJSON()));
 
   useLazyFont(currentFont, Boolean(currentFont));
   useLazyFont(nextFont, Boolean(nextFont));
