@@ -1,6 +1,6 @@
 import { type FC } from "react";
 import { useLazyFont } from "../hooks/useLazyFont";
-import type { Font } from "./FontViewer";
+import type { Font } from "./ExpertModeView";
 
 type Props = {
   likedFonts: Font[];
