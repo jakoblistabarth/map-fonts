@@ -27,18 +27,14 @@ FROM
     CROSS JOIN UNNEST(m.familyMetadataList) AS t (fm);
 
 CREATE OR REPLACE TABLE measured_values AS
-WITH
-    quant AS (
-        SELECT
-            column0 AS family,
-            column1 AS font,
-            regexp_extract(column2, '/?([^/]+)', 1) AS value_category,
-            regexp_extract(column2, '/?[^/]+/([^/]+)', 1) AS measured_value
-        FROM
-            "https://github.com/google/fonts/raw/refs/heads/main/tags/all/quant.csv"
-    )
+SELECT
+    column0 AS family,
+    column1 AS font,
+    regexp_extract(column2, '/?([^/]+)', 1) AS value_category,
+    regexp_extract(column2, '/?[^/]+/([^/]+)', 1) AS value_label,
+    column3 AS value
 FROM
-    quant;
+    "https://github.com/google/fonts/raw/refs/heads/main/tags/all/quant.csv";
 
 COPY tags TO './public/data/tags.parquet';
 
