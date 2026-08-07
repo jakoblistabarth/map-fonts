@@ -1,5 +1,6 @@
 import type { DuckDBBundles } from "@duckdb/duckdb-wasm";
 import { useEffect, useState } from "react";
+import { deepConvert, type DuckDBRow, type Row } from "../utils/deep-convert";
 
 interface UseQueryManagerOptions {
   onStatusChange?: (status: string) => void;
@@ -147,7 +148,18 @@ export function useQueryManager(
         // Use direct query for non-parameterized queries (required for PIVOT and other complex statements)
         result = await conn.query(sql);
       }
-      return result.toArray ? result.toArray() : result;
+      return result.toArray
+        ? (result
+            .toArray()
+            .map((row: DuckDBRow) =>
+              Object.fromEntries(
+                Object.entries(row.toJSON()).map(([k, v]) => [
+                  k,
+                  deepConvert(v),
+                ]),
+              ),
+            ) satisfies Row)
+        : result;
     } catch (err: any) {
       console.error("DuckDB query failed", { sql, params, err });
       // Re-throw a more informative error for the UI
