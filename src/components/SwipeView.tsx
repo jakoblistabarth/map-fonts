@@ -36,7 +36,7 @@ type ExitingCard = {
   phase: "start" | "exiting";
 };
 
-const FIRST_UNLOCK_COUNT = 1;
+const FIRST_UNLOCK_COUNT = 5;
 const TOP_SPACER_HEIGHT = "12.5rem";
 const SWIPE_THRESHOLD = 110;
 const STACK_GAP = 18;
@@ -155,6 +155,7 @@ const SwipeView: FC = ({}) => {
     startX: 0,
     startY: 0,
   });
+  const exitElRef = useRef<HTMLDivElement | null>(null);
 
   // Set deck and allFonts once the query manager is ready, but only once per mount.
   useEffect(() => {
@@ -279,35 +280,22 @@ const SwipeView: FC = ({}) => {
     (swipeCount / FIRST_UNLOCK_COUNT) * 100,
   );
 
-  // Once an exiting card is created it starts at the drag/rest position;
-  // on the next paint we flip it to the off-screen target so the CSS
-  // transition actually animates the fly-away + fade.
   useEffect(() => {
     if (!exitingCard || exitingCard.phase !== "start") return;
 
-    let raf1 = 0;
-    let raf2 = 0;
+    // Force Safari to commit the "start" transform before we flip to "exiting".
+    void exitElRef.current?.getBoundingClientRect();
 
-    raf1 = requestAnimationFrame(() => {
-      raf2 = requestAnimationFrame(() => {
-        setExitingCard((current) => {
-          if (!current || current.id !== exitingCard.id) return current;
-          const exitX =
-            (window.innerWidth + 240) * (current.direction === "yes" ? 1 : -1);
-          return {
-            ...current,
-            phase: "exiting",
-            x: exitX,
-            y: current.y * 0.08,
-          };
-        });
+    const id = requestAnimationFrame(() => {
+      setExitingCard((current) => {
+        if (!current || current.id !== exitingCard.id) return current;
+        const exitX =
+          (window.innerWidth + 240) * (current.direction === "yes" ? 1 : -1);
+        return { ...current, phase: "exiting", x: exitX, y: current.y * 0.08 };
       });
     });
 
-    return () => {
-      cancelAnimationFrame(raf1);
-      cancelAnimationFrame(raf2);
-    };
+    return () => cancelAnimationFrame(id);
   }, [exitingCard]);
 
   const startExit = (direction: SwipeDirection) => {
@@ -544,6 +532,7 @@ const SwipeView: FC = ({}) => {
 
     return (
       <div
+        ref={exitElRef}
         style={{
           position: "absolute",
           inset: 0,
