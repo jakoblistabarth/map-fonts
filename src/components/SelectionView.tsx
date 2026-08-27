@@ -97,15 +97,6 @@ const SelectionView: FC<Props> = ({
         <h2 style={{ margin: 0, fontSize: "1.05rem", fontWeight: 500 }}>
           We recommend you these typefaces
         </h2>
-        <div>
-          <a
-            href={`https://fonts.google.com/share?selection.family=${recommendedFonts.map((font) => font.family.replace(/ /g, "+")).join("|")}`}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Button>Get fonts from fonts.google</Button>
-          </a>
-        </div>
         <div
           style={{
             display: "grid",
@@ -128,6 +119,18 @@ const SelectionView: FC<Props> = ({
             </div>
           )}
         </div>
+      </section>
+      <section>
+        <a
+          href={`https://fonts.google.com/share?selection.family=${[...recommendedFonts, ...likedFonts].map((font) => font.family.replace(/ /g, "+")).join("|")}`}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <Button>
+            Get all fonts ({[...recommendedFonts, ...likedFonts].length}) from
+            fonts.google
+          </Button>
+        </a>
       </section>
     </div>
   );
