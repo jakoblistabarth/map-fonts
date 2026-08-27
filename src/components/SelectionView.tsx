@@ -5,10 +5,15 @@ import PreviewCard from "./PreviewCard";
 
 type Props = {
   likedFonts: Font[];
+  setLikedFonts: (fonts: Font[]) => void;
   recommendedFonts: Font[];
 };
 
-const SelectionView: FC<Props> = ({ likedFonts, recommendedFonts }) => {
+const SelectionView: FC<Props> = ({
+  likedFonts,
+  setLikedFonts,
+  recommendedFonts,
+}) => {
   return (
     <div
       style={{
@@ -47,9 +52,32 @@ const SelectionView: FC<Props> = ({ likedFonts, recommendedFonts }) => {
                   padding: "0.65rem 1rem",
                   fontFamily: font.family,
                   fontSize: "1.05rem",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "1rem",
                 }}
               >
                 {font.family}
+                <button
+                  style={{
+                    background: "none",
+                    border: "1px solid #777",
+                    borderRadius: "999px",
+                    width: "1.25rem",
+                    aspectRatio: "1/1",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    cursor: "pointer",
+                  }}
+                  onClick={() =>
+                    setLikedFonts(
+                      likedFonts.filter((f) => f.family !== font.family),
+                    )
+                  }
+                >
+                  ×
+                </button>
               </div>
             ))
           ) : (

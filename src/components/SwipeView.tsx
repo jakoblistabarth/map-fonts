@@ -724,6 +724,7 @@ const SwipeView: FC = () => {
       ) : (
         <SelectionView
           likedFonts={likedFonts}
+          setLikedFonts={setLikedFonts}
           recommendedFonts={recommendations}
         />
       )}
