@@ -41,3 +41,8 @@ COPY tags TO './public/data/tags.parquet';
 COPY family_metadata TO './public/data/family_metadata.parquet';
 
 COPY measured_values TO './public/data/measured_values.parquet';
+
+COPY (
+    FROM
+        'https://github.com/jakoblistabarth/gf-metrics/releases/download/dataset-latest/font_metrics.parquet'
+) TO './public/data/font_metrics.parquet';

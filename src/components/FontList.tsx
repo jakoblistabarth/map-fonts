@@ -11,6 +11,8 @@ import { useQueryManager } from "../hooks/useQueryManager";
 import type { Font } from "./ExpertModeView";
 import FontListRow from "./FontListRow";
 import TagList from "./TagList";
+import Collapsible from "./Collapsible";
+import MetricList from "./MetricList";
 
 export type TagCategory = Record<string, string[]>;
 export type SelectedTags = Record<string, Set<string>>;
@@ -156,22 +158,37 @@ const FontList: FC<Props> = ({ font, setFont }) => {
   return (
     <div
       style={{
+        boxSizing: "border-box",
+        width: "100%",
         display: "grid",
         gridTemplateColumns: "2fr 1fr",
         gap: "2em",
         padding: "1em",
       }}
     >
-      <div>
-        {manager.isReady ? (
-          <TagList
-            tagsByCategory={tagsByCategory}
-            selectedTags={selectedTags}
-            toggleTag={toggleTag}
-          />
-        ) : (
-          <p>Loading database...</p>
-        )}
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          gap: "1em",
+        }}
+      >
+        <Collapsible initialOpen={true} title="Filter by Metrics">
+          <MetricList />
+        </Collapsible>
+        <Collapsible title="Filter by Tags">
+          <div>
+            {manager.isReady ? (
+              <TagList
+                tagsByCategory={tagsByCategory}
+                selectedTags={selectedTags}
+                toggleTag={toggleTag}
+              />
+            ) : (
+              <p>Loading database...</p>
+            )}
+          </div>
+        </Collapsible>
       </div>
 
       {manager.isReady && (

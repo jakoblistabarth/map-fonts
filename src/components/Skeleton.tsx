@@ -1,8 +1,10 @@
-import type { FC } from "react";
+import type { FC, PropsWithChildren } from "react";
 import styles from "./Skeleton.module.css";
 
-const Skeleton: FC = () => {
-  return <div className={styles.skeleton}></div>;
+type Props = PropsWithChildren<{}>;
+
+const Skeleton: FC<Props> = ({ children }) => {
+  return <div className={styles.skeleton}>{children}</div>;
 };
 
 export default Skeleton;

@@ -64,7 +64,12 @@ export function useQueryManager(
         // Load table files
         options?.onStatusChange?.("Loading table files...");
 
-        const tables = ["tags", "family_metadata", "measured_values"];
+        const tables = [
+          "tags",
+          "family_metadata",
+          "measured_values",
+          "font_metrics",
+        ];
         for (const table of tables) {
           try {
             options?.onStatusChange?.(`Loading ${table}...`);
