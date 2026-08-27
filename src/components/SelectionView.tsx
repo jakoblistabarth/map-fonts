@@ -35,6 +35,11 @@ const SelectionView: FC<Props> = ({
         <h2 style={{ margin: 0, fontSize: "1.05rem", fontWeight: 500 }}>
           You liked these typefaces
         </h2>
+        <div>
+          <Button onClick={() => setLikedFonts([])}>
+            Reset Font Preferences
+          </Button>
+        </div>
         <div
           style={{
             display: "flex",
