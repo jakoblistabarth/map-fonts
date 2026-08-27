@@ -240,10 +240,6 @@ const SwipeView: FC = ({}) => {
         `,
       );
 
-      // TODO join the query result with the family_metadata table to get the full font objects instead of just the family names
-
-      console.log("Recommended families:", recommendedFamilies);
-
       const excluded = new Set<string>();
 
       if (currentFont) excluded.add(currentFont.family);
@@ -254,8 +250,6 @@ const SwipeView: FC = ({}) => {
 
     loadRecommendations();
   }, [allFonts, currentFont, likedFonts, swipeCount]);
-
-  console.log(recommendations.map((font) => font.toJSON()));
 
   useLazyFont(currentFont, Boolean(currentFont));
   useLazyFont(nextFont, Boolean(nextFont));
