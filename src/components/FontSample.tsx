@@ -1,4 +1,4 @@
-import { type FC, useEffect } from "react";
+import { type FC } from "react";
 import type { Font } from "./ExpertModeView";
 
 type Props = {

@@ -1,11 +1,17 @@
-import { useEffect, useRef, useState, type FC } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type FC,
+} from "react";
 import type { Font } from "./ExpertModeView";
 import { useLazyFont } from "../hooks/useLazyFont";
 import Button from "./button";
 
 type Props = {
   index: number;
-  style: React.CSSProperties;
+  style: CSSProperties;
   families: Font[];
   font: Font | null;
   setFont: (font: Font | null) => void;

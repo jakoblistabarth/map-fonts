@@ -1,7 +1,7 @@
 import { useState } from "react";
-import FontSample from "./FontSample";
 import DemoMap from "./DemoMap";
 import FontList from "./FontList";
+import FontSample from "./FontSample";
 
 export type Font = {
   family: string;

@@ -1,18 +1,18 @@
-import {
+import React, {
   useEffect,
   useRef,
   useState,
   type CSSProperties,
   type FC,
 } from "react";
-import mapEurope from "../assets/map_europe.png";
 import heartIcon from "../assets/heart.svg";
+import mapEurope from "../assets/map_europe.png";
 import { useLazyFont } from "../hooks/useLazyFont";
 import { useQueryManager } from "../hooks/useQueryManager";
 import type { Font } from "./ExpertModeView";
-import SwipeButton from "./SwipeButton";
-import Skeleton from "./Skeleton";
 import SelectionView from "./SelectionView";
+import Skeleton from "./Skeleton";
+import SwipeButton from "./SwipeButton";
 
 type MapLabelStyleKey = "thin" | "regular" | "bold";
 
@@ -123,13 +123,13 @@ const getLabelKey = (font: Font) => font.family;
 /**
  * Component displays a list of font families as deck of cards for the user to swipe through.
  */
-const SwipeView: FC = ({}) => {
+const SwipeView: FC = () => {
   const [status, setStatus] = useState("idle");
   const manager = useQueryManager({
     onStatusChange: (status) => setStatus(status),
   });
   //TODO: clean up state management
-  const [fontTagMatrix, setFontTagMatrix] = useState<any>([]);
+  const [fontTagMatrix, setFontTagMatrix] = useState<[]>([]);
   const [activeTab, setActiveTab] = useState<TabKey>("swipe");
   const [swipeCount, setSwipeCount] = useState<number>(0);
   const [likedFonts, setLikedFonts] = useState<Font[]>([]);
@@ -140,7 +140,7 @@ const SwipeView: FC = ({}) => {
   const [isDragging, setIsDragging] = useState(false);
   const [exitingCard, setExitingCard] = useState<ExitingCard | null>(null);
 
-  // true while the previously-swiped card is still flying off screen
+  // True while the previously-swiped card is still flying off screen
   const isAnimating = exitingCard !== null;
 
   const hasLoadedRef = useRef(false);

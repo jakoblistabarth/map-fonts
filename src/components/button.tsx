@@ -1,8 +1,8 @@
-import type { FC, PropsWithChildren } from "react";
+import type { FC, PropsWithChildren, CSSProperties } from "react";
 
 type Props = PropsWithChildren<{
   onClick?: () => void;
-  style?: React.CSSProperties;
+  style?: CSSProperties;
 }>;
 
 const Button: FC<Props> = ({ children, onClick, style }) => {

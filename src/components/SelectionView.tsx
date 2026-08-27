@@ -1,6 +1,6 @@
-import Button from "./button";
-import { type FC } from "react";
+import type { FC } from "react";
 import { useLazyFont } from "../hooks/useLazyFont";
+import Button from "./button";
 import type { Font } from "./ExpertModeView";
 
 type Props = {

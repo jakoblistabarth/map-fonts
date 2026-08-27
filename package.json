@@ -11,6 +11,7 @@
     "prepare:database": "pnpm dlx tsx ./scripts/write-tables.ts",
     "check:database": "pnpm dlx tsx ./scripts/check-database.ts",
     "setup": "pnpm run prepare:duckdb-wasm && pnpm run check:database",
+    "lint": "pnpm eslint src scripts",
     "predev": "pnpm run setup",
     "dev": "astro dev",
     "build": "astro build",
@@ -32,8 +33,16 @@
     "typescript": "^5.9.3"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@types/node": "^25.5.0",
     "@types/react": "^19.2.14",
-    "@types/react-dom": "^19.2.3"
+    "@types/react-dom": "^19.2.3",
+    "eslint": "^9.39.5",
+    "eslint-plugin-react": "^7.37.5",
+    "globals": "^17.11.0",
+    "jiti": "^2.7.0",
+    "prettier": "^3.9.6",
+    "prettier-eslint": "^17.1.2",
+    "typescript-eslint": "^8.68.0"
   }
 }
