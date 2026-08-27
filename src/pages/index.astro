@@ -1,6 +1,8 @@
 ---
 import SwipeView from "../components/SwipeView";
 import Layout from "../layouts/Layout.astro";
+
+const base = import.meta.env.BASE_URL;
 ---
 
 <Layout>
@@ -9,7 +11,7 @@ import Layout from "../layouts/Layout.astro";
   >
     <SwipeView client:load />
     <a
-      href="/expert-mode"
+      href={`${base}/expert-mode`}
       style="border: 1px black solid; padding: .5em; border-radius: .5em; text-decoration: none;"
       >Filter Mode</a
     >
