@@ -15,16 +15,13 @@ const Collapsible: FC<Props> = ({ title, children, initialOpen }) => {
 
   return (
     <div className="collapsible">
-      <div style={{ marginBottom: "0.5rem" }}>
-        <Button
-          style={{ display: "flex", gap: "1em", alignItems: "center" }}
-          onClick={togglePanel}
-        >
+      <div className="mb-2">
+        <Button className="flex items-center gap-2" onClick={togglePanel}>
           {title}{" "}
           {isOpen ? (
-            <ChevronUpIcon style={{ height: "1em" }} />
+            <ChevronUpIcon className="size-3" />
           ) : (
-            <ChevronDownIcon style={{ height: "1em" }} />
+            <ChevronDownIcon className="size-3" />
           )}
         </Button>
       </div>

@@ -3,9 +3,10 @@ import type { FC, PropsWithChildren, CSSProperties } from "react";
 type Props = PropsWithChildren<{
   onClick?: () => void;
   style?: CSSProperties;
+  className?: string;
 }>;
 
-const Button: FC<Props> = ({ children, onClick, style }) => {
+const Button: FC<Props> = ({ children, onClick, style, className }) => {
   return (
     <button
       onClick={onClick}
@@ -19,6 +20,7 @@ const Button: FC<Props> = ({ children, onClick, style }) => {
         fontSize: "0.8em",
         ...style,
       }}
+      className={className}
     >
       {children}
     </button>
