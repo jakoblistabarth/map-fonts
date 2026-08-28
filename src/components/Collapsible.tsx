@@ -1,33 +1,48 @@
-import React, { useState, type FC } from "react";
-import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/24/solid";
-import Button from "./button";
+"use client";
+
+import * as React from "react";
+import { ChevronsUpDown } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 
 type Props = {
   title: string;
-  children: React.ReactNode;
   initialOpen?: boolean;
 };
 
-const Collapsible: FC<Props> = ({ title, children, initialOpen }) => {
-  const [isOpen, setIsOpen] = useState(initialOpen ?? false);
-
-  const togglePanel = () => setIsOpen(!isOpen);
+const GenericCollapsible: React.FC<React.PropsWithChildren<Props>> = ({
+  title,
+  children,
+  initialOpen,
+}) => {
+  const [isOpen, setIsOpen] = React.useState(false);
 
   return (
-    <div className="collapsible">
-      <div className="mb-2">
-        <Button className="flex items-center gap-2" onClick={togglePanel}>
-          {title}{" "}
-          {isOpen ? (
-            <ChevronUpIcon className="size-3" />
-          ) : (
-            <ChevronDownIcon className="size-3" />
-          )}
-        </Button>
+    <Collapsible
+      open={isOpen}
+      onOpenChange={setIsOpen}
+      defaultOpen={initialOpen}
+      className="flex flex-col gap-2"
+    >
+      <div className="flex items-center justify-between gap-4 px-4">
+        <h4 className="text-sm font-semibold">{title}</h4>
+        <CollapsibleTrigger asChild>
+          <Button variant="ghost" size="icon" className="size-8">
+            <ChevronsUpDown />
+            <span className="sr-only">Toggle details</span>
+          </Button>
+        </CollapsibleTrigger>
       </div>
-      {isOpen && <div className="collapsible-content">{children}</div>}
-    </div>
+      <CollapsibleContent className="flex flex-col gap-2">
+        {children}
+      </CollapsibleContent>
+    </Collapsible>
   );
 };
 
-export default Collapsible;
+export default GenericCollapsible;

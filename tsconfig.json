@@ -3,6 +3,10 @@
   "include": [".astro/types.d.ts", "**/*"],
   "exclude": ["dist", "public/data", "public/duckdb"],
   "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"]
+    },
     "jsx": "react-jsx",
     "jsxImportSource": "react"
   }
