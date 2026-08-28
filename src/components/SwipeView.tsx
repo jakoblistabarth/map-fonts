@@ -37,7 +37,7 @@ type ExitingCard = {
 };
 
 const FIRST_UNLOCK_COUNT = 1;
-const TOP_SPACER_HEIGHT = "12.5rem";
+const TOP_SPACER_HEIGHT = "8rem";
 const SWIPE_THRESHOLD = 110;
 const STACK_GAP = 18;
 const STACK_SCALE_STEP = 0.035;
@@ -402,11 +402,8 @@ const SwipeView: FC = () => {
     border: 0,
     borderRadius: "999px",
     padding: "0.8rem 1rem",
-    background:
-      activeTab === tab
-        ? "linear-gradient(180deg, #ffd74f, #f6c000)"
-        : "transparent",
-    color: activeTab === tab ? "#111" : "#6f6f6f",
+    background: activeTab === tab ? "#3348af" : "transparent",
+    color: activeTab === tab ? "#edece9" : "#6f6f6f",
     fontWeight: 600,
     display: "flex",
     alignItems: "center",

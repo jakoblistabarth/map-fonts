@@ -1,51 +1,53 @@
 import type { FC } from "react";
 import type { Font } from "./ExpertModeView";
 import { useLazyFont } from "../hooks/useLazyFont";
+import styles from "./DeleteButton.module.css";
 
 type Props = {
   font: Font;
-  label: string;
-  compact?: boolean;
+  onDelete?: () => void;
 };
 
-const PreviewCard: FC<Props> = ({ font, label, compact = false }) => {
+const PreviewCard: FC<Props> = ({ font, onDelete }) => {
   useLazyFont(font, true);
 
   return (
     <div
       style={{
-        borderRadius: "1.25rem",
-        background: "linear-gradient(180deg, #fff8dc 0%, #f7e39f 100%)",
-        boxShadow: "0 10px 24px rgba(0, 0, 0, 0.08)",
-        padding: compact ? "0.75rem 1rem" : "1rem 1.1rem",
         display: "flex",
         flexDirection: "column",
-        gap: "0.35rem",
-        minWidth: 0,
+        gap: "0.25rem",
+        padding: "0.5rem 0",
+        position: "relative",
       }}
     >
       <div
         style={{
-          fontFamily: font.family,
-          fontSize: compact ? "1.1rem" : "1.35rem",
-          lineHeight: 1.1,
-          color: "#111",
-          whiteSpace: "nowrap",
-          overflow: "hidden",
-          textOverflow: "ellipsis",
+          display: "flex",
+          alignItems: "center",
+          gap: "0.25rem",
         }}
       >
-        {font.family}
+        {onDelete && (
+          <button
+            aria-label={`Remove ${font.family}`}
+            className={styles.button}
+            onClick={onDelete}
+          >
+            ×
+          </button>
+        )}
+        <div style={{ fontSize: "1.05rem" }}>{font.family}</div>
       </div>
       <div
         style={{
-          fontSize: "0.8rem",
-          color: "rgba(0, 0, 0, 0.68)",
-          textTransform: "uppercase",
-          letterSpacing: "0.08em",
+          fontFamily: font.family,
+          fontSize: "1.75rem",
+          lineHeight: 1.2,
+          color: "#111",
         }}
       >
-        {label}
+        Mexico City, New Delhi, Quito, Reykjavik, Port of Spain, Zagreb
       </div>
     </div>
   );
