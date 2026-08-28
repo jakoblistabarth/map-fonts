@@ -95,7 +95,7 @@ const SelectionView: FC<Props> = ({
         style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}
       >
         <h2 style={{ margin: 0, fontSize: "1.05rem", fontWeight: 500 }}>
-          We recommend you these typefaces
+          You might also like these typefaces
         </h2>
         <div
           style={{

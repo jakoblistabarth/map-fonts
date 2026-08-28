@@ -36,7 +36,7 @@ type ExitingCard = {
   phase: "start" | "exiting";
 };
 
-const FIRST_UNLOCK_COUNT = 5;
+const FIRST_UNLOCK_COUNT = 1;
 const TOP_SPACER_HEIGHT = "12.5rem";
 const SWIPE_THRESHOLD = 110;
 const STACK_GAP = 18;
