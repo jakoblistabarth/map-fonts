@@ -1,4 +1,9 @@
 {
+  "editor.formatOnSave": true,
+  "prettier.documentSelectors": ["**/*.astro"],
+  "prettier.prettierPath": "./node_modules/prettier",
   "SQL-Formatter-VSCode.dialect": "duckdb",
-  "editor.formatOnSave": true
+  "[astro]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  }
 }

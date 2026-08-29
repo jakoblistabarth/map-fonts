@@ -58,6 +58,7 @@
     "jiti": "^2.7.0",
     "prettier": "^3.9.6",
     "prettier-eslint": "^17.1.2",
+    "prettier-plugin-astro": "^0.14.1",
     "prettier-plugin-tailwindcss": "^0.8.1",
     "typescript-eslint": "^8.68.0"
   }
