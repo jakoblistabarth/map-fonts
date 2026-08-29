@@ -15,7 +15,7 @@ export default defineConfig({
   fonts: [
     {
       provider: fontProviders.fontshare(),
-      name: "Bespoke Sans",
+      name: "Work Sans",
       cssVariable: "--font-sans",
       weights: [400, 700, 900],
     },
