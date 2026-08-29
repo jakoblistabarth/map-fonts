@@ -13,6 +13,11 @@ import FontListRow from "./FontListRow";
 import TagList from "./TagList";
 import Collapsible from "./Collapsible";
 import MetricList from "./MetricList";
+import {
+  metricFilterQuery,
+  type MetricKey,
+  type MetricRanges,
+} from "../utils/metrics";
 
 export type TagCategory = Record<string, string[]>;
 export type SelectedTags = Record<string, Set<string>>;
@@ -41,6 +46,21 @@ const FontList: FC<Props> = ({ font, setFont }) => {
     {},
   );
   const [tagsByCategory, setTagsByCategory] = useState<TagCategory>({});
+  const [metricRanges, setMetricRanges] = useState<MetricRanges>({});
+
+  const setMetricRange = useCallback(
+    (metric: MetricKey, range: [number, number] | undefined) => {
+      setMetricRanges((prev) => {
+        if (!range) {
+          const next = { ...prev };
+          delete next[metric];
+          return next;
+        }
+        return { ...prev, [metric]: range };
+      });
+    },
+    [],
+  );
 
   // Load tags grouped by category on mount
   useEffect(() => {
@@ -49,12 +69,12 @@ const FontList: FC<Props> = ({ font, setFont }) => {
     }
   }, [manager.isReady]);
 
-  // Auto-query whenever selected tags change
+  // Auto-query whenever selected tags or brushed metric ranges change
   useEffect(() => {
     if (manager.isReady && Object.keys(tagsByCategory).length > 0) {
-      queryByTag();
+      queryFamilies();
     }
-  }, [selectedTags, manager.isReady]);
+  }, [selectedTags, metricRanges, manager.isReady]);
 
   const loadAvailableTags = async () => {
     try {
@@ -103,12 +123,19 @@ const FontList: FC<Props> = ({ font, setFont }) => {
     return Object.values(fonts).filter(Boolean).length;
   }, []);
 
-  const queryByTag = async () => {
+  const queryFamilies = async () => {
     // Get all selected tags from all categories, flattened
     const selectedTagArray: string[] = [];
     Object.values(selectedTags).forEach((tagSet) => {
       tagSet.forEach((tag) => selectedTagArray.push(tag));
     });
+
+    // Families that have at least one design space location within every
+    // brushed metric range.
+    const metricFilter = metricFilterQuery(metricRanges);
+    const metricJoin = metricFilter
+      ? `INNER JOIN (${metricFilter}) mf ON mf.family = fm.family`
+      : "";
 
     setLoading(true);
     try {
@@ -119,9 +146,9 @@ const FontList: FC<Props> = ({ font, setFont }) => {
         result = await manager.query(`
           SELECT DISTINCT fm.family, fm.category, fm.fonts, fm.axes
           FROM family_metadata fm
+          ${metricJoin}
           ORDER BY fm.family
         `);
-        setStatus(`Showing all ${result.length} font families`);
       } else {
         // Filter families where ALL selected tags have weight > 60
         const tagCount = selectedTagArray.length;
@@ -133,16 +160,25 @@ const FontList: FC<Props> = ({ font, setFont }) => {
           SELECT DISTINCT fm.family, fm.category, fm.fonts, fm.axes
           FROM family_metadata fm
           INNER JOIN tags t ON t.family = fm.family
+          ${metricJoin}
           WHERE t.tag IN (${tagList}) AND t.weight > 60
           GROUP BY fm.family, fm.category, fm.fonts, fm.axes
           HAVING COUNT(DISTINCT t.tag) = ${tagCount}
           ORDER BY fm.family
         `);
-
-        setStatus(
-          `Found ${result.length} families matching ALL selected tags (weight > 60): ${selectedTagArray.join(", ")}`,
-        );
       }
+
+      const criteria = [
+        selectedTagArray.length > 0 &&
+          `ALL selected tags (weight > 60): ${selectedTagArray.join(", ")}`,
+        metricFilter && "the brushed metric ranges",
+      ].filter(Boolean);
+
+      setStatus(
+        criteria.length === 0
+          ? `Showing all ${result.length} font families`
+          : `Found ${result.length} families matching ${criteria.join(" and ")}`,
+      );
 
       startTransition(() => {
         setFamilies(result);
@@ -174,7 +210,7 @@ const FontList: FC<Props> = ({ font, setFont }) => {
         }}
       >
         <Collapsible initialOpen={true} title="Filter by Metrics">
-          <MetricList />
+          <MetricList ranges={metricRanges} setRange={setMetricRange} />
         </Collapsible>
         <Collapsible title="Filter by Tags">
           <div>

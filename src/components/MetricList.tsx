@@ -1,17 +1,32 @@
 import { useEffect, useState, type FC } from "react";
 import { useQueryManager } from "../hooks/useQueryManager";
-import Skeleton from "./Skeleton";
+import {
+  binQuery,
+  METRICS,
+  type MetricBin,
+  type MetricKey,
+  type MetricRanges,
+} from "../utils/metrics";
 import FilterLineChart from "./FilterLineChart";
+import Skeleton from "./Skeleton";
 
-type Props = {};
+type Props = {
+  ranges: MetricRanges;
+  setRange: (metric: MetricKey, range: [number, number] | undefined) => void;
+};
 
-const MetricsList: FC<Props> = () => {
+/**
+ * Component displays a histogram per font metric. Brushing a histogram filters
+ * the font list down to the selected range of values.
+ */
+const MetricsList: FC<Props> = ({ ranges, setRange }) => {
   const manager = useQueryManager({
     onStatusChange: (status) => console.log("Query Manager Status:", status),
   });
 
-  const [status, setStatus] = useState("Initializing...");
-  const [metrics, setMetrics] = useState<{ [key: string]: any[] }>({});
+  const [metrics, setMetrics] = useState<
+    Partial<Record<MetricKey, MetricBin[]>>
+  >({});
 
   // Load metrics
   useEffect(() => {
@@ -22,43 +37,16 @@ const MetricsList: FC<Props> = () => {
 
   const loadMetrics = async () => {
     try {
-      const xHeight = await manager.query(`
-        SELECT
-          floor(rel_xheight / 0.025) * 0.025 AS bin_start,
-          count(*) AS font_count
-        FROM font_metrics
-        WHERE rel_xheight IS NOT NULL
-        GROUP BY bin_start
-        ORDER BY bin_start;
-      `);
-      const descender = await manager.query(`
-        SELECT
-          floor(rel_descender / 0.025) * 0.025 AS bin_start,
-          count(*) AS font_count
-        FROM font_metrics
-        WHERE rel_descender IS NOT NULL
-        GROUP BY bin_start
-        ORDER BY bin_start;
-      `);
-      const ascender = await manager.query(`
-        SELECT
-          floor(rel_ascender / 0.025) * 0.025 AS bin_start,
-          count(*) AS font_count
-        FROM font_metrics
-        WHERE rel_ascender IS NOT NULL
-        GROUP BY bin_start
-        ORDER BY bin_start;
-      `);
-      const capHeight = await manager.query(`
-        SELECT
-          floor(rel_cap_height / 0.025) * 0.025 AS bin_start,
-          count(*) AS font_count
-        FROM font_metrics
-        WHERE rel_cap_height IS NOT NULL
-        GROUP BY bin_start
-        ORDER BY bin_start;
-      `);
-      setMetrics((d) => ({ ...d, xHeight, descender, ascender, capHeight }));
+      const entries = await Promise.all(
+        METRICS.map(
+          async ({ key, column }) =>
+            [
+              key,
+              (await manager.query(binQuery(column))) as MetricBin[],
+            ] as const,
+        ),
+      );
+      setMetrics(Object.fromEntries(entries));
     } catch (err) {
       console.error("Failed to load font metrics:", err);
     }
@@ -66,58 +54,28 @@ const MetricsList: FC<Props> = () => {
 
   return (
     <section style={{ width: "100%" }}>
-      <h2>Font Metrics</h2>
       {Object.keys(metrics).length > 0 ? (
-        <>
-          <div
-            style={{
-              display: "grid",
-              gap: "1em",
-              gridTemplateColumns: "auto auto auto auto",
-            }}
-          >
-            <FilterLineChart
-              title="x-Height"
-              xAccessor={(d: { bin_start: number; font_count: number }) =>
-                d.bin_start
-              }
-              yAccessor={(d: { bin_start: number; font_count: number }) =>
-                d.font_count
-              }
-              data={metrics.xHeight}
-            />
-            <FilterLineChart
-              title="Descender"
-              xAccessor={(d: { bin_start: number; font_count: number }) =>
-                d.bin_start
-              }
-              yAccessor={(d: { bin_start: number; font_count: number }) =>
-                d.font_count
-              }
-              data={metrics.descender}
-            />
-            <FilterLineChart
-              title="Ascender"
-              xAccessor={(d: { bin_start: number; font_count: number }) =>
-                d.bin_start
-              }
-              yAccessor={(d: { bin_start: number; font_count: number }) =>
-                d.font_count
-              }
-              data={metrics.ascender}
-            />
-            <FilterLineChart
-              title="Cap Height"
-              xAccessor={(d: { bin_start: number; font_count: number }) =>
-                d.bin_start
-              }
-              yAccessor={(d: { bin_start: number; font_count: number }) =>
-                d.font_count
-              }
-              data={metrics.capHeight}
-            />
-          </div>
-        </>
+        <div
+          style={{
+            display: "grid",
+            gap: "1em",
+            gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+          }}
+        >
+          {METRICS.map(({ key, label }) => {
+            const data = metrics[key];
+            if (!data) return null;
+            return (
+              <FilterLineChart
+                key={key}
+                title={label}
+                data={data}
+                range={ranges[key]}
+                onRangeChange={(range) => setRange(key, range)}
+              />
+            );
+          })}
+        </div>
       ) : (
         <Skeleton>
           <p>Loading metrics...</p>

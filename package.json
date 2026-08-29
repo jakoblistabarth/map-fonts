@@ -27,6 +27,7 @@
     "@tailwindcss/vite": "^4.3.3",
     "@types/d3-format": "^3.0.4",
     "@visx/curve": "^4.0.0",
+    "@visx/responsive": "^4.0.0",
     "@visx/xychart": "^4.0.0",
     "astro": "^6.1.5",
     "class-variance-authority": "^0.7.1",

@@ -20,17 +20,16 @@ const GenericCollapsible: React.FC<React.PropsWithChildren<Props>> = ({
   children,
   initialOpen,
 }) => {
-  const [isOpen, setIsOpen] = React.useState(false);
+  const [isOpen, setIsOpen] = React.useState(initialOpen ?? false);
 
   return (
     <Collapsible
       open={isOpen}
       onOpenChange={setIsOpen}
-      defaultOpen={initialOpen}
       className="flex flex-col gap-2"
     >
-      <div className="flex items-center justify-between gap-4 px-4">
-        <h4 className="text-sm font-semibold">{title}</h4>
+      <div className="flex items-center justify-between gap-4">
+        <h4>{title}</h4>
         <CollapsibleTrigger asChild>
           <Button variant="ghost" size="icon" className="size-8">
             <ChevronsUpDown />
