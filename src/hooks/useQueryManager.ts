@@ -1,5 +1,6 @@
-import type { DuckDBBundles } from "@duckdb/duckdb-wasm";
-import { useEffect, useState } from "react";
+import type { AsyncDuckDBConnection } from "@duckdb/duckdb-wasm";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { connect, getStatus, subscribeToStatus } from "../utils/duckdb";
 import { deepConvert, type DuckDBRow, type Row } from "../utils/deep-convert";
 
 interface UseQueryManagerOptions {
@@ -10,137 +11,58 @@ export interface QueryManager {
   isReady: boolean;
   query: (sql: string, params?: any[]) => Promise<any[]>;
   prepare: (sql: string) => Promise<any>;
-  close: () => Promise<void>;
 }
 
 /**
- * Hook that manages a persistent DuckDB connection for the component's lifetime
- * Loads table files once on mount, and provides a query function
+ * Hook that provides a connection to the shared DuckDB instance.
+ *
+ * The database itself (worker, WASM, tables, indices) is a module-level
+ * singleton, so mounting and unmounting components — collapsing a panel, for
+ * instance — is cheap and never reloads the data. Only the connection is tied
+ * to the component's lifetime.
  */
-export function useQueryManager(
+export const useQueryManager = (
   options?: UseQueryManagerOptions,
-): QueryManager {
-  const [db, setDb] = useState<any>(null);
-  const [conn, setConn] = useState<any>(null);
+): QueryManager => {
+  const connRef = useRef<AsyncDuckDBConnection | null>(null);
   const [isReady, setIsReady] = useState(false);
 
+  // Keep the latest callback without re-running the connection effect
+  const onStatusChangeRef = useRef(options?.onStatusChange);
+  onStatusChangeRef.current = options?.onStatusChange;
+
   useEffect(() => {
-    const setupDatabase = async () => {
-      try {
-        options?.onStatusChange?.("Initializing DuckDB-WASM...");
+    let cancelled = false;
 
-        // Import DuckDB WASM
-        const duckdbModule: any = await import("@duckdb/duckdb-wasm");
-        const duckdb: any = duckdbModule.default ?? duckdbModule;
+    const unsubscribe = subscribeToStatus((status) =>
+      onStatusChangeRef.current?.(status),
+    );
+    onStatusChangeRef.current?.(getStatus());
 
-        // Use manual bundles and let duckdb select the right one for this environment
-        const baseUrl = import.meta.env.BASE_URL;
-        const basePath = baseUrl.endsWith("/") ? baseUrl : baseUrl + "/";
-        const MANUAL_BUNDLES: DuckDBBundles = {
-          mvp: {
-            mainModule: `${basePath}duckdb/duckdb-mvp.wasm`,
-            mainWorker: `${basePath}duckdb/duckdb-browser-mvp.worker.js`,
-          },
-          eh: {
-            mainModule: `${basePath}duckdb/duckdb-eh.wasm`,
-            mainWorker: `${basePath}duckdb/duckdb-browser-eh.worker.js`,
-          },
-        };
-
-        const bundle = await duckdb.selectBundle(MANUAL_BUNDLES);
-        console.log("[DuckDB] Selected bundle:", bundle.mainModule);
-
-        const logger = new duckdb.ConsoleLogger();
-        const worker = new Worker(bundle.mainWorker);
-        const newDb = new duckdb.AsyncDuckDB(logger, worker);
-
-        console.log("[DuckDB] Instantiating with WASM module...");
-        // Pass pthreadWorker as second argument so the runtime can wire threads if available
-        await newDb.instantiate(bundle.mainModule, bundle.pthreadWorker);
-
-        console.log("[DuckDB] Creating connection...");
-        const newConn = await newDb.connect();
-
-        // Load table files
-        options?.onStatusChange?.("Loading table files...");
-
-        const tables = [
-          "tags",
-          "family_metadata",
-          "measured_values",
-          "font_metrics",
-        ];
-        for (const table of tables) {
-          try {
-            options?.onStatusChange?.(`Loading ${table}...`);
-            const tableFileUrl = `${basePath}data/${table}.parquet`;
-            console.log(`[${table}] Loading from: ${tableFileUrl}`);
-
-            // Fetch the parquet file as a blob
-            const response = await fetch(tableFileUrl);
-            if (!response.ok) {
-              throw new Error(
-                `Failed to fetch ${table}.parquet: ${response.status} ${response.statusText}`,
-              );
-            }
-
-            const arrayBuffer = await response.arrayBuffer();
-
-            // Register the buffer as a file in DuckDB's virtual filesystem
-            const fileName = `/${table}.parquet`;
-            await newDb.registerFileBuffer(
-              fileName,
-              new Uint8Array(arrayBuffer),
-            );
-
-            // Load from the registered file
-            await newConn.query(
-              `CREATE OR REPLACE TABLE ${table} AS FROM '${fileName}'`,
-            );
-            console.log(`[${table}] Created table successfully`);
-          } catch (err: any) {
-            console.error(`[${table}] Failed to load:`, err);
-            options?.onStatusChange?.(`Error loading ${table}: ${err.message}`);
-          }
+    connect()
+      .then((conn) => {
+        if (cancelled) {
+          conn.close().catch(console.error);
+          return;
         }
-        options?.onStatusChange?.("Ready! Database loaded with all tables.");
-
-        // Create vector indices for faster querying
-        const sqlUrl = `${basePath}vector-search.sql`;
-        const sqlResponse = await fetch(sqlUrl);
-        const sqlText = await sqlResponse.text();
-
-        // Split by semicolons and execute each statement
-        const statements = sqlText.split(";").filter((s) => s.trim());
-        for (const statement of statements) {
-          if (statement.trim()) {
-            await newConn.query(statement);
-          }
-        }
-
-        setDb(newDb);
-        setConn(newConn);
+        connRef.current = conn;
         setIsReady(true);
-      } catch (err: any) {
-        options?.onStatusChange?.(`Error: ${err.message}`);
-        console.error("Failed to setup database:", err);
-      }
-    };
-
-    setupDatabase();
+      })
+      .catch((err) => {
+        console.error("Failed to connect to database:", err);
+      });
 
     return () => {
-      // Cleanup on unmount
-      if (conn) {
-        conn.close().catch(console.error);
-      }
-      if (db) {
-        db.terminate().catch(console.error);
-      }
+      cancelled = true;
+      unsubscribe();
+      const conn = connRef.current;
+      connRef.current = null;
+      conn?.close().catch(console.error);
     };
   }, []);
 
-  const query = async (sql: string, params?: any[]) => {
+  const query = useCallback(async (sql: string, params?: any[]) => {
+    const conn = connRef.current;
     if (!conn) throw new Error("Database not ready");
     try {
       let result;
@@ -153,18 +75,13 @@ export function useQueryManager(
         // Use direct query for non-parameterized queries (required for PIVOT and other complex statements)
         result = await conn.query(sql);
       }
-      return result.toArray
-        ? (result
-            .toArray()
-            .map((row: DuckDBRow) =>
-              Object.fromEntries(
-                Object.entries(row.toJSON()).map(([k, v]) => [
-                  k,
-                  deepConvert(v),
-                ]),
-              ),
-            ) satisfies Row)
-        : result;
+      return result
+        .toArray()
+        .map((row: DuckDBRow) =>
+          Object.fromEntries(
+            Object.entries(row.toJSON()).map(([k, v]) => [k, deepConvert(v)]),
+          ),
+        ) satisfies Row[];
     } catch (err: any) {
       console.error("DuckDB query failed", { sql, params, err });
       // Re-throw a more informative error for the UI
@@ -176,18 +93,13 @@ export function useQueryManager(
       if (err?.stack) e.stack = `${e.stack}\nCaused by: ${err.stack}`;
       throw e;
     }
-  };
+  }, []);
 
-  const prepare = async (sql: string) => {
+  const prepare = useCallback(async (sql: string) => {
+    const conn = connRef.current;
     if (!conn) throw new Error("Database not ready");
     return conn.prepare(sql);
-  };
+  }, []);
 
-  const close = async () => {
-    if (conn) await conn.close();
-    if (db) await db.terminate();
-    setIsReady(false);
-  };
-
-  return { isReady, query, prepare, close };
+  return { isReady, query, prepare };
 }
