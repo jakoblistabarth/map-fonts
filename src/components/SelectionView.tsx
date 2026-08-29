@@ -60,9 +60,11 @@ const SelectionView: FC<Props> = ({
                 whiteSpace: "nowrap",
               }}
             >
-              <SelectionButton red onClick={() => setLikedFonts([])}>
-                Reset liked fonts
-              </SelectionButton>
+              {likedFonts.length > 0 && (
+                <SelectionButton red onClick={() => setLikedFonts([])}>
+                  Reset liked fonts
+                </SelectionButton>
+              )}
             </div>
           </div>
           <div
