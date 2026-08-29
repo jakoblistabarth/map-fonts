@@ -5,7 +5,6 @@ import React, {
   type CSSProperties,
   type FC,
 } from "react";
-import heartIcon from "../assets/heart.svg";
 import mapEurope from "../assets/map_europe.png";
 import { useLazyFont } from "../hooks/useLazyFont";
 import { useQueryManager } from "../hooks/useQueryManager";
@@ -13,6 +12,7 @@ import type { Font } from "./ExpertModeView";
 import SelectionView from "./SelectionView";
 import Skeleton from "./Skeleton";
 import SwipeButton from "./SwipeButton";
+import { HeartIcon, XIcon } from "lucide-react";
 
 type MapLabelStyleKey = "thin" | "regular" | "bold";
 
@@ -688,33 +688,10 @@ const SwipeView: FC = () => {
 
           <div style={{ display: "flex", gap: "0.75rem" }}>
             <SwipeButton type="no" onClick={() => triggerSwipe("no")}>
-              <svg
-                width={40}
-                height={40}
-                viewBox="0 0 10 10"
-                strokeLinejoin="round"
-                strokeLinecap="round"
-              >
-                <line
-                  x1="1"
-                  y1="1"
-                  x2="9"
-                  y2="9"
-                  stroke="white"
-                  strokeWidth="2"
-                />
-                <line
-                  x1="9"
-                  y1="1"
-                  x2="1"
-                  y2="9"
-                  stroke="white"
-                  strokeWidth="2"
-                />
-              </svg>
+              <XIcon className="size-10 stroke-white" />
             </SwipeButton>
             <SwipeButton type="yes" onClick={() => triggerSwipe("yes")}>
-              <img src={heartIcon.src} alt="Heart" width={50} height={50} />
+              <HeartIcon className="size-10 fill-white/5 stroke-white" />
             </SwipeButton>
           </div>
         </div>
