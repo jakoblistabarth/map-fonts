@@ -103,26 +103,28 @@ const SelectionView: FC<Props> = ({
             }}
           >
             <h2>You might also like these ones</h2>
-            <div
-              style={{
-                position: "absolute",
-                left: "calc(100% + 1rem)",
-                top: "50%",
-                transform: "translateY(-50%)",
-                whiteSpace: "nowrap",
-              }}
-            >
-              <a
-                href={`https://fonts.google.com/share?selection.family=${[...recommendedFonts, ...likedFonts].map((font) => font.family.replace(/ /g, "+")).join("|")}`}
-                target="_blank"
-                rel="noopener noreferrer"
+            {likedFonts.length > 0 && (
+              <div
+                style={{
+                  position: "absolute",
+                  left: "calc(100% + 1rem)",
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  whiteSpace: "nowrap",
+                }}
               >
-                <SelectionButton>
-                  Get all fonts ({[...recommendedFonts, ...likedFonts].length})
-                  from fonts.google
-                </SelectionButton>
-              </a>
-            </div>
+                <a
+                  href={`https://fonts.google.com/share?selection.family=${[...recommendedFonts, ...likedFonts].map((font) => font.family.replace(/ /g, "+")).join("|")}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <SelectionButton>
+                    Get all fonts ({[...recommendedFonts, ...likedFonts].length}
+                    ) from fonts.google
+                  </SelectionButton>
+                </a>
+              </div>
+            )}
           </div>
           <div
             style={{
