@@ -1,0 +1,22 @@
+.button {
+  padding: 0.6rem 1rem;
+  border-radius: 999px;
+  background: #e6e4e1;
+  color: #292926;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition:
+    background 150ms ease,
+    color 150ms ease;
+  border: none;
+  appearance: none;
+}
+
+.button:hover {
+  background: #304cb3;
+  color: white;
+}
+
+.red:hover {
+  background: #c43d3d;
+}

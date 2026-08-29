@@ -1,0 +1,27 @@
+.button {
+  background: none;
+  background-color: #e6e4e1;
+  border-radius: 999px;
+  width: 3;
+  aspect-ratio: 1 / 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border: none;
+  appearance: none;
+  font-size: 1.25rem;
+  padding: 0.5rem;
+  position: absolute;
+  right: calc(100% + 1rem);
+  top: 1.25rem;
+  transform: translateY(-50%);
+  transition:
+    background 150ms ease,
+    color 150ms ease;
+}
+
+.button:hover {
+  background: #c43d3d;
+  color: white;
+}
