@@ -3,6 +3,7 @@ import type {
   AsyncDuckDBConnection,
   DuckDBBundles,
 } from "@duckdb/duckdb-wasm";
+import { basePath } from "./base";
 
 /**
  * Module-level DuckDB singleton.
@@ -44,11 +45,6 @@ export const subscribeToStatus = (listener: (status: string) => void) => {
   };
 };
 
-const getBasePath = () => {
-  const baseUrl = import.meta.env.BASE_URL;
-  return baseUrl.endsWith("/") ? baseUrl : baseUrl + "/";
-};
-
 const bootstrap = async (): Promise<AsyncDuckDB> => {
   setStatus("Initializing DuckDB-WASM...");
 
@@ -56,7 +52,6 @@ const bootstrap = async (): Promise<AsyncDuckDB> => {
   const duckdb = (duckdbModule as any).default ?? duckdbModule;
 
   // Use manual bundles and let duckdb select the right one for this environment
-  const basePath = getBasePath();
   const MANUAL_BUNDLES: DuckDBBundles = {
     mvp: {
       mainModule: `${basePath}duckdb/duckdb-mvp.wasm`,
