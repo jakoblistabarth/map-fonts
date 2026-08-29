@@ -15,7 +15,7 @@ export default defineConfig({
   fonts: [
     {
       provider: fontProviders.fontshare(),
-      name: "Satoshi",
+      name: "Bespoke Sans",
       cssVariable: "--font-sans",
       weights: [400, 700, 900],
     },
