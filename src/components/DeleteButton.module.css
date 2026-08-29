@@ -1,8 +1,7 @@
 .button {
-  background: none;
   background-color: #e6e4e1;
   border-radius: 999px;
-  width: 3;
+  width: 2em;
   aspect-ratio: 1 / 1;
   display: flex;
   align-items: center;
@@ -10,18 +9,17 @@
   cursor: pointer;
   border: none;
   appearance: none;
-  font-size: 1.25rem;
-  padding: 0.5rem;
+  font-size: 1rem;
   position: absolute;
   right: calc(100% + 1rem);
   top: 1.25rem;
   transform: translateY(-50%);
   transition:
-    background 150ms ease,
+    background-color 150ms ease,
     color 150ms ease;
 }
 
 .button:hover {
-  background: #c43d3d;
+  background-color: #c43d3d;
   color: white;
 }
