@@ -2,7 +2,6 @@ import type { FC } from "react";
 import type { Font } from "./ExpertModeView";
 import PreviewCard from "./PreviewCard";
 import SelectionButton from "./SelectionButton";
-import styles from "./SelectionView.module.css";
 
 type Props = {
   likedFonts: Font[];
