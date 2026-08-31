@@ -64,7 +64,7 @@ const mapLabelNames = [
 const mapLabelStyles: Record<MapLabelStyleKey, CSSProperties> = {
   thin: {
     fontWeight: 200,
-    fontSize: "0.85rem",
+    fontSize: "0.75rem",
   },
   regular: {
     fontWeight: 400,
@@ -72,7 +72,7 @@ const mapLabelStyles: Record<MapLabelStyleKey, CSSProperties> = {
   },
   bold: {
     fontWeight: 700,
-    fontSize: "1.15rem",
+    fontSize: "1.25rem",
   },
 };
 
@@ -122,12 +122,12 @@ const createMapLabels = (): MapLabel[] => {
     "thin",
     "thin",
     "thin",
+    "thin",
+    "thin",
     "regular",
     "regular",
     "regular",
     "regular",
-    "bold",
-    "bold",
     "bold",
     "bold",
   ]);
@@ -659,6 +659,7 @@ const SwipeView: FC = () => {
       <img
         src={currentMapImageSrc}
         alt={font.family}
+        draggable={false}
         style={{
           position: "absolute",
           top: 0,
@@ -669,6 +670,9 @@ const SwipeView: FC = () => {
           transform: `scale(${mapZoom})`,
           transformOrigin: "center center",
           zIndex: 1,
+          userSelect: "none",
+          pointerEvents: "none",
+          WebkitUserDrag: "none",
         }}
       />
       {labels.map((label) => (
@@ -734,6 +738,7 @@ const SwipeView: FC = () => {
           background: "#fff",
           touchAction: slot === 0 ? "none" : "auto",
           userSelect: slot === 0 ? "none" : "auto",
+          WebkitUserDrag: "none",
           cursor: slot === 0 ? (isDragging ? "grabbing" : "grab") : "default",
           transition,
           transform,
@@ -937,7 +942,7 @@ const SwipeView: FC = () => {
                 marginBottom: "0.75rem",
               }}
             >
-              {stackEntries.map((entry) =>
+                  {stackEntries.map((entry) =>
                 renderStackCard(entry.font, entry.slot, entry.deckIndex),
               )}
               {renderExitingCard()}

@@ -93,20 +93,20 @@ const SelectionView: FC<Props> = ({
           </div>
         </section>
 
-        <section
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: "0.75rem",
-          }}
-        >
-          <div
+        {likedFonts.length > 0 && (
+          <section
             style={{
-              position: "relative",
+              display: "flex",
+              flexDirection: "column",
+              gap: "0.75rem",
             }}
           >
-            <h2>You might also like these ones</h2>
-            {likedFonts.length > 0 && (
+            <div
+              style={{
+                position: "relative",
+              }}
+            >
+              <h2>You might also like these ones</h2>
               <div
                 style={{
                   position: "absolute",
@@ -127,26 +127,26 @@ const SelectionView: FC<Props> = ({
                   </SelectionButton>
                 </a>
               </div>
-            )}
-          </div>
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "1fr",
-              gap: "0.85rem",
-            }}
-          >
-            {recommendedFonts.length > 0 ? (
-              recommendedFonts.map((font) => (
-                <PreviewCard key={font.family} font={font} />
-              ))
-            ) : (
-              <div style={{ color: "#777" }}>
-                No recommendations available yet.
-              </div>
-            )}
-          </div>
-        </section>
+            </div>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1fr",
+                gap: "0.85rem",
+              }}
+            >
+              {recommendedFonts.length > 0 ? (
+                recommendedFonts.map((font) => (
+                  <PreviewCard key={font.family} font={font} />
+                ))
+              ) : (
+                <div style={{ color: "#777" }}>
+                  No recommendations available yet.
+                </div>
+              )}
+            </div>
+          </section>
+        )}
       </div>
     </div>
   );
