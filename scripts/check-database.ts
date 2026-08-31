@@ -10,6 +10,7 @@ async function checkAndPrepare(): Promise<void> {
     "tags.parquet",
     "family_metadata.parquet",
     "measured_values.parquet",
+    "font_metrics.parquet",
   ];
 
   // Check if all files exist

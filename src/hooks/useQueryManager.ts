@@ -1,5 +1,5 @@
 import type { AsyncDuckDBConnection } from "@duckdb/duckdb-wasm";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { connect, getStatus, subscribeToStatus } from "../utils/duckdb";
 import { deepConvert, type DuckDBRow, type Row } from "../utils/deep-convert";
 
@@ -101,5 +101,8 @@ export const useQueryManager = (
     return conn.prepare(sql);
   }, []);
 
-  return { isReady, query, prepare };
+  return useMemo(
+    () => ({ isReady, query, prepare }),
+    [isReady, query, prepare],
+  );
 }

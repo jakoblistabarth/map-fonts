@@ -1,5 +1,6 @@
 import React, {
   useEffect,
+  useMemo,
   useRef,
   useState,
   type CSSProperties,
@@ -36,13 +37,13 @@ type ExitingCard = {
   phase: "start" | "exiting";
 };
 
-const FIRST_UNLOCK_COUNT = 1;
+const FIRST_UNLOCK_COUNT = 10;
 const TOP_SPACER_HEIGHT = "8rem";
 const SWIPE_THRESHOLD = 110;
 const STACK_GAP = 18;
 const STACK_SCALE_STEP = 0.035;
 const CARD_TRANSITION =
-  "transform 800ms cubic-bezier(0.22, 1, 0.36, 1), opacity 600ms cubic-bezier(0.22, 1, 0.36, 1)";
+  "transform 600ms cubic-bezier(0.22, 1, 0.36, 1), opacity 600ms cubic-bezier(0.22, 1, 0.36, 1)";
 
 const mapLabelNames = [
   "Ardena",
@@ -74,6 +75,32 @@ const mapLabelStyles: Record<MapLabelStyleKey, CSSProperties> = {
   },
 };
 
+const FRAME_MARGIN = 12;
+const LABEL_GAP = 8;
+
+const clamp = (value: number, min: number, max: number) =>
+  Math.min(max, Math.max(min, value));
+
+const getLabelMetrics = (name: string, style: MapLabelStyleKey) => {
+  const fontSize = Number.parseFloat(
+    String(mapLabelStyles[style].fontSize ?? "1rem").replace("rem", ""),
+  );
+  const width = Math.max(8, name.length * 0.7 * fontSize * 1.25);
+  const height = Math.max(5, fontSize * 3.3);
+
+  return { width, height };
+};
+
+const rectsIntersect = (
+  a: { left: number; right: number; top: number; bottom: number },
+  b: { left: number; right: number; top: number; bottom: number },
+  gap: number,
+) =>
+  a.left < b.right + gap &&
+  a.right + gap > b.left &&
+  a.top < b.bottom + gap &&
+  a.bottom + gap > b.top;
+
 const shuffle = <T,>(items: T[]) => {
   const shuffled = [...items];
 
@@ -104,21 +131,131 @@ const createMapLabels = (): MapLabel[] => {
     "bold",
   ]);
   const shuffledNames = shuffle(mapLabelNames);
+  const renderedRects: Array<{
+    left: number;
+    right: number;
+    top: number;
+    bottom: number;
+  }> = [];
 
   return shuffledNames.map((name, index) => {
-    const left = 8 + Math.random() * 84;
-    const top = 8 + Math.random() * 84;
+    const style = styleSlots[index];
+    const { width, height } = getLabelMetrics(name, style);
+
+    const baseLeft = 8 + Math.random() * 84;
+    const baseTop = 8 + Math.random() * 84;
+
+    const candidateOffsets = [0, -1, 1, -2, 2, -3, 3, -4, 4, -5, 5, -6, 6];
+
+    let placed = false;
+    let left = baseLeft;
+    let top = baseTop;
+
+    for (const dx of candidateOffsets) {
+      for (const dy of candidateOffsets) {
+        const nextLeft = clamp(
+          baseLeft + dx * (width * 0.6),
+          FRAME_MARGIN,
+          100 - width - FRAME_MARGIN,
+        );
+        const nextTop = clamp(
+          baseTop + dy * (height * 0.6),
+          FRAME_MARGIN,
+          100 - height - FRAME_MARGIN,
+        );
+        const rect = {
+          left: nextLeft,
+          right: nextLeft + width,
+          top: nextTop,
+          bottom: nextTop + height,
+        };
+
+        const overlaps = renderedRects.some((existing) =>
+          rectsIntersect(existing, rect, LABEL_GAP),
+        );
+
+        if (!overlaps) {
+          left = nextLeft;
+          top = nextTop;
+          renderedRects.push(rect);
+          placed = true;
+          break;
+        }
+      }
+
+      if (placed) break;
+    }
+
+    if (!placed) {
+      const fallbackLeft = clamp(baseLeft, FRAME_MARGIN, 100 - width - FRAME_MARGIN);
+      const fallbackTop = clamp(baseTop, FRAME_MARGIN, 100 - height - FRAME_MARGIN);
+      const rect = {
+        left: fallbackLeft,
+        right: fallbackLeft + width,
+        top: fallbackTop,
+        bottom: fallbackTop + height,
+      };
+
+      for (let y = FRAME_MARGIN; y <= 100 - FRAME_MARGIN; y += 5) {
+        for (let x = FRAME_MARGIN; x <= 100 - FRAME_MARGIN; x += 5) {
+          const candidate = {
+            left: x,
+            right: x + width,
+            top: y,
+            bottom: y + height,
+          };
+
+          const hasOverlap = renderedRects.some((existing) =>
+            rectsIntersect(existing, candidate, LABEL_GAP),
+          );
+
+          if (!hasOverlap && x + width <= 100 && y + height <= 100) {
+            left = x;
+            top = y;
+            renderedRects.push(candidate);
+            placed = true;
+            break;
+          }
+        }
+
+        if (placed) break;
+      }
+
+      if (!placed) {
+        left = fallbackLeft;
+        top = fallbackTop;
+        renderedRects.push(rect);
+      }
+    }
 
     return {
       name,
       left: `${left.toFixed(1)}%`,
       top: `${top.toFixed(1)}%`,
-      style: styleSlots[index],
+      style,
     };
   });
 };
 
+const FIXED_START_FONTS = [
+  "M PLUS 2",
+  "Suez One",
+  "Prociono",
+  "Alkalami",
+  "Cabin Condensed",
+  "Noto Sans Tai Viet",
+  "The Nautigal",
+  "Noto Serif Khmer",
+  "PT Mono",
+  "Playwrite AT Guides",
+] as const;
+
 const getLabelKey = (font: Font) => font.family;
+
+const getFixedStartFonts = (fonts: Font[]) =>
+  FIXED_START_FONTS.map((family) =>
+    fonts.find((font) => font.family === family),
+  ).filter((font): font is Font => Boolean(font));
 
 /**
  * Component displays a list of font families as deck of cards for the user to swipe through.
@@ -133,6 +270,9 @@ const SwipeView: FC = () => {
   const [activeTab, setActiveTab] = useState<TabKey>("swipe");
   const [swipeCount, setSwipeCount] = useState<number>(0);
   const [likedFonts, setLikedFonts] = useState<Font[]>([]);
+  const [discardedFamilies, setDiscardedFamilies] = useState<Set<string>>(
+    new Set(),
+  );
   const [allFonts, setAllFonts] = useState<Font[]>([]);
   const [deckFonts, setDeckFonts] = useState<Font[]>([]);
   const [recommendations, setRecommendations] = useState<Font[]>([]);
@@ -171,33 +311,77 @@ const SwipeView: FC = () => {
     }
   }, [manager.isReady]);
 
-  const deckLength = deckFonts.length;
-  const currentIndex = deckLength > 0 ? swipeCount % deckLength : 0;
-  const nextIndex = deckLength > 1 ? (swipeCount + 1) % deckLength : 0;
-  const thirdIndex = deckLength > 2 ? (swipeCount + 2) % deckLength : 0;
+  // Memoized so this array keeps a stable identity across renders (it only
+  // needs to change when `allFonts` changes). It's used as a dependency of
+  // the recommendations effect below, so an unstable reference here would
+  // cause that effect to re-run on every render.
+  const fixedStartFonts = useMemo(
+    () => getFixedStartFonts(allFonts),
+    [allFonts],
+  );
 
-  const currentFont = deckLength > 0 ? deckFonts[currentIndex] : null;
-  const nextFont = deckLength > 1 ? deckFonts[nextIndex] : null;
-  const thirdFont = deckLength > 2 ? deckFonts[thirdIndex] : null;
+  const getDeckFontAtPosition = (position: number): Font | null => {
+    if (position < fixedStartFonts.length) {
+      return fixedStartFonts[position] ?? null;
+    }
 
-  // Update recommendations whenever the deck changes, the current font changes, or the liked fonts change.
+    const recommendationIndex = position - fixedStartFonts.length;
+
+    if (!recommendations.length) {
+      return fixedStartFonts[fixedStartFonts.length - 1] ?? null;
+    }
+
+    return (
+      recommendations[recommendationIndex] ??
+      recommendations[recommendations.length - 1] ??
+      null
+    );
+  };
+
+  const currentIndex = swipeCount;
+  const nextIndex = swipeCount + 1;
+  const thirdIndex = swipeCount + 2;
+
+  const currentFont = getDeckFontAtPosition(currentIndex);
+  const nextFont = getDeckFontAtPosition(nextIndex);
+  const thirdFont = getDeckFontAtPosition(thirdIndex);
+
+  // Recompute the recommendation pool whenever the user's likes/dislikes
+  // change. This deliberately does NOT depend on `currentFont`: once
+  // swipeCount moves past the fixed starter cards, `currentFont` is itself
+  // read from `recommendations` (see getDeckFontAtPosition above). Excluding
+  // "whatever font is currently on screen" from the query used to create a
+  // feedback loop — recommendations changed currentFont, which changed the
+  // exclusion, which changed recommendations again, and so on — which is
+  // what caused the fonts to blink/alternate and the query to re-fire
+  // repeatedly. Excluding `fixedStartFonts` instead avoids recommending a
+  // font that's already one of the 10 starter cards.
   useEffect(() => {
     const loadRecommendations = async () => {
-      if (!allFonts.length || !currentFont || !likedFonts.length) {
+      if (!allFonts.length) {
         setRecommendations([]);
         return;
       }
 
-      // TODO:
-      // Get average vector of liked fonts (GROUP BY)
-      // Common Table Expression (CTE) to calculate average vector of liked fonts
-      // Then use that average vector to find the closest fonts in the families_vectors table
-      if (manager.isReady && !hasLoadedRef.current) return;
-      const likedFamilies = likedFonts
-        .map((font) => `'${font.family}'`)
-        .join(", ");
+      const excluded = new Set<string>(discardedFamilies);
+      likedFonts.forEach((font) => excluded.add(font.family));
+      fixedStartFonts.forEach((font) => excluded.add(font.family));
 
-      console.log("Liked families:", likedFamilies);
+      if (likedFonts.length === 0) {
+        const nextRecommendations = allFonts
+          .filter((font) => !excluded.has(font.family))
+          .sort((a, b) => a.family.localeCompare(b.family))
+          .slice(0, 4);
+        setRecommendations(nextRecommendations);
+        return;
+      }
+
+      const likedFamilies = likedFonts
+        .map((font) => `'${font.family.replace(/'/g, "''")}'`)
+        .join(", ");
+      const excludedFamilies = Array.from(excluded)
+        .map((family) => `'${family.replace(/'/g, "''")}'`)
+        .join(", ");
 
       const recommendedFamilies = await manager.query(
         `WITH
@@ -231,25 +415,24 @@ const SwipeView: FC = () => {
           families_vectors
           JOIN family_metadata USING (family)
           CROSS JOIN average_vector
-        WHERE
-          family NOT IN (${likedFamilies})
+        ${excludedFamilies ? `WHERE family NOT IN (${excludedFamilies})` : ""}
         ORDER BY
-          list_distance(tags, average_vector.vector) ASC
+          list_distance(tags, average_vector.vector) ASC,
+          family ASC
         LIMIT
           4;
         `,
       );
 
-      const excluded = new Set<string>();
-
-      if (currentFont) excluded.add(currentFont.family);
-      likedFonts.forEach((font) => excluded.add(font.family));
-
-      setRecommendations(recommendedFamilies);
+      setRecommendations(
+        recommendedFamilies
+          .filter((font) => !excluded.has(font.family))
+          .sort((a, b) => a.family.localeCompare(b.family)),
+      );
     };
 
-    loadRecommendations();
-  }, [allFonts, currentFont, likedFonts, swipeCount]);
+    void loadRecommendations();
+  }, [allFonts, likedFonts, discardedFamilies, fixedStartFonts, manager]);
 
   useLazyFont(currentFont, Boolean(currentFont));
   useLazyFont(nextFont, Boolean(nextFont));
@@ -304,6 +487,8 @@ const SwipeView: FC = () => {
           ? previous
           : [...previous, font],
       );
+    } else {
+      setDiscardedFamilies((previous) => new Set([...previous, font.family]));
     }
 
     exitIdRef.current += 1;
@@ -648,7 +833,7 @@ const SwipeView: FC = () => {
                     width: `${progressPercent}%`,
                     height: "100%",
                     borderRadius: "inherit",
-                    background: "linear-gradient(180deg, #ffd74f, #f6c000)",
+                    background: "#3348af",
                     transition: "width 180ms ease",
                   }}
                 />
