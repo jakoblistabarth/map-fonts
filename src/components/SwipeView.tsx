@@ -320,36 +320,47 @@ const SwipeView: FC = () => {
     [allFonts],
   );
 
-  const getDeckFontAtPosition = (position: number): Font | null => {
-    if (position < fixedStartFonts.length) {
-      return fixedStartFonts[position] ?? null;
-    }
-
-    const recommendationIndex = position - fixedStartFonts.length;
-
-    if (!recommendations.length) {
-      return fixedStartFonts[fixedStartFonts.length - 1] ?? null;
-    }
-
-    return (
-      recommendations[recommendationIndex] ??
-      recommendations[recommendations.length - 1] ??
-      null
-    );
-  };
-
   const currentIndex = swipeCount;
   const nextIndex = swipeCount + 1;
   const thirdIndex = swipeCount + 2;
 
-  const currentFont = getDeckFontAtPosition(currentIndex);
-  const nextFont = getDeckFontAtPosition(nextIndex);
-  const thirdFont = getDeckFontAtPosition(thirdIndex);
+  // `recommendations` is re-ranked after every swipe to reflect the user's
+  // current taste (see the effect below), so it's always "the best picks
+  // given what's been decided so far" — not a fixed batch of 4 upcoming
+  // cards. That means once we're past the fixed starter cards, the active
+  // card must always read recommendations[0], the "next" preview
+  // recommendations[1], and the "third" preview recommendations[2] — i.e.
+  // slots counted from the front of the CURRENT list, not from an
+  // ever-growing absolute deck position (which was the bug: it kept
+  // indexing further into a list that had already moved on, eventually
+  // running off the end and getting stuck on the last item).
+  const getStackFonts = (): [Font | null, Font | null, Font | null] => {
+    let recommendationSlot = 0;
+
+    return [currentIndex, nextIndex, thirdIndex].map((position) => {
+      if (position < fixedStartFonts.length) {
+        return fixedStartFonts[position] ?? null;
+      }
+
+      if (!recommendations.length) {
+        return fixedStartFonts[fixedStartFonts.length - 1] ?? null;
+      }
+
+      const font =
+        recommendations[recommendationSlot] ??
+        recommendations[recommendations.length - 1] ??
+        null;
+      recommendationSlot += 1;
+      return font;
+    }) as [Font | null, Font | null, Font | null];
+  };
+
+  const [currentFont, nextFont, thirdFont] = getStackFonts();
 
   // Recompute the recommendation pool whenever the user's likes/dislikes
   // change. This deliberately does NOT depend on `currentFont`: once
   // swipeCount moves past the fixed starter cards, `currentFont` is itself
-  // read from `recommendations` (see getDeckFontAtPosition above). Excluding
+  // read from `recommendations` (see getStackFonts above). Excluding
   // "whatever font is currently on screen" from the query used to create a
   // feedback loop — recommendations changed currentFont, which changed the
   // exclusion, which changed recommendations again, and so on — which is
@@ -490,6 +501,15 @@ const SwipeView: FC = () => {
     } else {
       setDiscardedFamilies((previous) => new Set([...previous, font.family]));
     }
+
+    // Optimistically drop the just-decided font from the recommendation
+    // preview so recommendations[0] is immediately correct for the next
+    // card, without waiting on the async re-ranking query below to catch
+    // up. The effect still runs afterwards and replaces this with a fully
+    // recomputed, better-ranked list.
+    setRecommendations((previous) =>
+      previous.filter((f) => f.family !== font.family),
+    );
 
     exitIdRef.current += 1;
     setExitingCard({
