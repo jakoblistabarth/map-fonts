@@ -13,6 +13,7 @@ import type { Font } from "./ExpertModeView";
 import SelectionView from "./SelectionView";
 import Skeleton from "./Skeleton";
 import SwipeButton from "./SwipeButton";
+import MapDropZone from "./MapDropZone";
 import { HeartIcon, XIcon } from "lucide-react";
 
 type MapLabelStyleKey = "thin" | "regular" | "bold";
@@ -279,6 +280,30 @@ const SwipeView: FC = () => {
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const [exitingCard, setExitingCard] = useState<ExitingCard | null>(null);
+  const [customMapImage, setCustomMapImage] = useState<string | null>(null);
+  const [labelColor, setLabelColor] = useState<"black" | "white">("black");
+  const [mapZoom, setMapZoom] = useState(1);
+
+  const handleMapImageChange = (file: File | null) => {
+    setCustomMapImage((previous) => {
+      if (previous?.startsWith("blob:")) {
+        URL.revokeObjectURL(previous);
+      }
+
+      return file ? URL.createObjectURL(file) : null;
+    });
+  };
+
+  const resetMapImage = () => {
+    setCustomMapImage((previous) => {
+      if (previous?.startsWith("blob:")) {
+        URL.revokeObjectURL(previous);
+      }
+
+      return null;
+    });
+    setMapZoom(1);
+  };
 
   // True while the previously-swiped card is still flying off screen
   const isAnimating = exitingCard !== null;
@@ -431,7 +456,7 @@ const SwipeView: FC = () => {
           list_distance(tags, average_vector.vector) ASC,
           family ASC
         LIMIT
-          4;
+          3;
         `,
       );
 
@@ -622,11 +647,17 @@ const SwipeView: FC = () => {
   const liveProgress = isDragging
     ? Math.min(Math.abs(dragOffset.x) / SWIPE_THRESHOLD, 1)
     : 0;
+  const currentMapImageSrc = customMapImage ?? mapEurope.src;
+  const labelTextColor = labelColor === "black" ? "#1b1b1b" : "#ffffff";
+  const labelTextShadow =
+    labelColor === "black"
+      ? "0 1px 2px rgba(255, 255, 255, 0.65)"
+      : "0 1px 2px rgba(0, 0, 0, 0.7)";
 
   const renderCardContent = (font: Font, labels: MapLabel[]) => (
     <>
       <img
-        src={mapEurope.src}
+        src={currentMapImageSrc}
         alt={font.family}
         style={{
           position: "absolute",
@@ -635,6 +666,8 @@ const SwipeView: FC = () => {
           width: "100%",
           height: "100%",
           objectFit: "cover",
+          transform: `scale(${mapZoom})`,
+          transformOrigin: "center center",
           zIndex: 1,
         }}
       />
@@ -647,8 +680,8 @@ const SwipeView: FC = () => {
             left: label.left,
             transform: "translate(-50%, -50%)",
             zIndex: 2,
-            color: "#1b1b1b",
-            textShadow: "0 1px 2px rgba(255, 255, 255, 0.65)",
+            color: labelTextColor,
+            textShadow: labelTextShadow,
             whiteSpace: "nowrap",
             pointerEvents: "none",
             fontFamily: font.family,
@@ -819,85 +852,119 @@ const SwipeView: FC = () => {
         <div
           style={{
             width: "100%",
-            maxWidth: "420px",
             display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            gap: "1rem",
+            justifyContent: "center",
+            alignItems: "flex-start",
+            gap: "4rem",
           }}
         >
-          {!selectionUnlocked && (
-            <div
-              style={{
-                width: "100%",
-                display: "flex",
-                flexDirection: "column",
-                gap: "0.45rem",
-              }}
-            >
-              <div style={{ color: "#666", fontSize: "0.95rem" }}>
-                Swipe {remainingUnlockSwipes} more times!
-              </div>
-              <div
-                style={{
-                  position: "relative",
-                  width: "100%",
-                  height: "0.95rem",
-                  borderRadius: "999px",
-                  background: "#ececec",
-                  overflow: "hidden",
-                }}
-              >
-                <div
-                  style={{
-                    width: `${progressPercent}%`,
-                    height: "100%",
-                    borderRadius: "inherit",
-                    background: "#3348af",
-                    transition: "width 180ms ease",
-                  }}
-                />
-              </div>
-            </div>
-          )}
+          <div
+            style={{
+              position: "fixed",
+              left: "calc(50% - 220px - 12rem)",
+              top: "50%",
+              transform: "translateY(-50%)",
+              zIndex: 25,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: "0.5rem",
+            }}
+          >
+            <MapDropZone
+              currentImageSrc={customMapImage}
+              labelColor={labelColor}
+              zoom={mapZoom}
+              onImageChange={handleMapImageChange}
+              onReset={resetMapImage}
+              onLabelColorChange={setLabelColor}
+              onZoomChange={setMapZoom}
+            />
+          </div>
 
           <div
             style={{
-              position: "relative",
               width: "100%",
-              aspectRatio: "2 / 3",
-              overflow: "visible",
-              marginTop: "0.25rem",
-              marginBottom: "0.75rem",
+              maxWidth: "420px",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: "1rem",
             }}
           >
-            {stackEntries.map((entry) =>
-              renderStackCard(entry.font, entry.slot, entry.deckIndex),
-            )}
-            {renderExitingCard()}
-            {!manager.isReady && (
+            {!selectionUnlocked && (
               <div
                 style={{
-                  position: "absolute",
-                  inset: 0,
-                  zIndex: 5,
+                  width: "100%",
                   display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
+                  flexDirection: "column",
+                  gap: "0.45rem",
                 }}
               >
-                <Skeleton />
+                <div style={{ color: "#666", fontSize: "0.95rem" }}>
+                  Swipe {remainingUnlockSwipes} more times!
+                </div>
+                <div
+                  style={{
+                    position: "relative",
+                    width: "100%",
+                    height: "0.95rem",
+                    borderRadius: "999px",
+                    background: "#ececec",
+                    overflow: "hidden",
+                  }}
+                >
+                  <div
+                    style={{
+                      width: `${progressPercent}%`,
+                      height: "100%",
+                      borderRadius: "inherit",
+                      background: "#3348af",
+                      transition: "width 180ms ease",
+                    }}
+                  />
+                </div>
               </div>
             )}
-          </div>
 
-          <div style={{ display: "flex", gap: "0.75rem" }}>
-            <SwipeButton type="no" onClick={() => triggerSwipe("no")}>
-              <XIcon className="size-10 stroke-white" />
-            </SwipeButton>
-            <SwipeButton type="yes" onClick={() => triggerSwipe("yes")}>
-              <HeartIcon className="size-10 fill-white/5 stroke-white" />
-            </SwipeButton>
+            <div
+              style={{
+                position: "relative",
+                width: "100%",
+                aspectRatio: "2 / 3",
+                overflow: "visible",
+                marginTop: "0.25rem",
+                marginBottom: "0.75rem",
+              }}
+            >
+              {stackEntries.map((entry) =>
+                renderStackCard(entry.font, entry.slot, entry.deckIndex),
+              )}
+              {renderExitingCard()}
+              {!manager.isReady && (
+                <div
+                  style={{
+                    position: "absolute",
+                    inset: 0,
+                    zIndex: 5,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <Skeleton />
+                </div>
+              )}
+            </div>
+
+            <div style={{ display: "flex", gap: "0.75rem" }}>
+              <SwipeButton type="no" onClick={() => triggerSwipe("no")}>
+                <XIcon className="size-10 stroke-white" />
+              </SwipeButton>
+              <SwipeButton type="yes" onClick={() => triggerSwipe("yes")}>
+                <HeartIcon className="size-10 fill-white/5 stroke-white" />
+              </SwipeButton>
+            </div>
           </div>
         </div>
       ) : (

@@ -1,0 +1,96 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2rem;
+}
+
+.text {
+  font-family: inherit;
+  color: #555;
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+.colorGroup {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.colorRow {
+  display: flex;
+  gap: 0.55rem;
+}
+
+.colorButton {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  cursor: pointer;
+  padding: 0;
+}
+
+.colorButtonSelected {
+  border: 2px solid #3348af;
+  box-shadow: 0 0 0 2px rgba(51, 72, 175, 0.12);
+}
+
+.colorButtonUnselected {
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  box-shadow: none;
+}
+
+.uploadButton {
+  width: 150px;
+  height: 150px;
+  border-radius: 20px;
+  border: 1px dashed #b9b9b9;
+  background: #f3f3f3;
+  color: #2a2a2a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  cursor: pointer;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.05);
+  transition: border-color 120ms ease, transform 120ms ease;
+  flex-shrink: 0;
+}
+
+.uploadButtonDragging {
+  border: 1px solid #3348af;
+}
+
+.uploadText {
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 999px;
+  padding: 0.25rem 0.5rem;
+  text-align: center;
+  line-height: 1.2;
+  backdrop-filter: blur(2px);
+  color: #1b1b1b;
+}
+
+.zoomGroup {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  width: 120px;
+}
+
+.zoomInput {
+  width: 100%;
+  accent-color: #3348af;
+}
+
+.resetButton {
+  border: none;
+  background: #f1f1f1;
+  color: #2d2d2d;
+  padding: 0.35rem 0.6rem;
+  border-radius: 999px;
+  cursor: pointer;
+}
