@@ -188,8 +188,16 @@ const createMapLabels = (): MapLabel[] => {
     }
 
     if (!placed) {
-      const fallbackLeft = clamp(baseLeft, FRAME_MARGIN, 100 - width - FRAME_MARGIN);
-      const fallbackTop = clamp(baseTop, FRAME_MARGIN, 100 - height - FRAME_MARGIN);
+      const fallbackLeft = clamp(
+        baseLeft,
+        FRAME_MARGIN,
+        100 - width - FRAME_MARGIN,
+      );
+      const fallbackTop = clamp(
+        baseTop,
+        FRAME_MARGIN,
+        100 - height - FRAME_MARGIN,
+      );
       const rect = {
         left: fallbackLeft,
         right: fallbackLeft + width,
@@ -240,23 +248,37 @@ const createMapLabels = (): MapLabel[] => {
 
 const FIXED_START_FONTS = [
   "M PLUS 2",
-  "Suez One",
-  "Prociono",
+  "Bevan",
+  "Arsenal SC",
+  "Stint Ultra Condensed",
   "Alkalami",
+  "Average",
+  "Outfit",
+  "Suez One",
+  "Suravaram",
   "Cabin Condensed",
   "Noto Sans Tai Viet",
   "The Nautigal",
   "Noto Serif Khmer",
+  "Prociono",
+  "Dorsa",
   "PT Mono",
+  "Manrope",
   "Playwrite AT Guides",
+  "Mali",
+  "Bitcount Prop Double Ink",
 ] as const;
 
 const getLabelKey = (font: Font) => font.family;
 
-const getFixedStartFonts = (fonts: Font[]) =>
-  FIXED_START_FONTS.map((family) =>
+const getFixedStartFonts = (fonts: Font[]) => {
+  const allStartFonts = FIXED_START_FONTS.map((family) =>
     fonts.find((font) => font.family === family),
   ).filter((font): font is Font => Boolean(font));
+
+  // Return 10 random fonts from the 20 available starting fonts
+  return shuffle(allStartFonts).slice(0, 10);
+};
 
 /**
  * Component displays a list of font families as deck of cards for the user to swipe through.
@@ -942,7 +964,7 @@ const SwipeView: FC = () => {
                 marginBottom: "0.75rem",
               }}
             >
-                  {stackEntries.map((entry) =>
+              {stackEntries.map((entry) =>
                 renderStackCard(entry.font, entry.slot, entry.deckIndex),
               )}
               {renderExitingCard()}

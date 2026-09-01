@@ -33,8 +33,7 @@
 }
 
 .colorButtonSelected {
-  border: 2px solid #3348af;
-  box-shadow: 0 0 0 2px rgba(51, 72, 175, 0.12);
+  border: 2px solid #2a2a2a;
 }
 
 .colorButtonUnselected {
@@ -55,12 +54,14 @@
   padding: 0;
   cursor: pointer;
   box-shadow: 0 8px 18px rgba(0, 0, 0, 0.05);
-  transition: border-color 120ms ease, transform 120ms ease;
+  transition:
+    border-color 120ms ease,
+    transform 120ms ease;
   flex-shrink: 0;
 }
 
 .uploadButtonDragging {
-  border: 1px solid #3348af;
+  border: 1px solid #2a2a2a;
 }
 
 .uploadText {
@@ -83,7 +84,7 @@
 
 .zoomInput {
   width: 100%;
-  accent-color: #2a2a2a;;
+  accent-color: #2a2a2a;
 }
 
 .resetButton {
