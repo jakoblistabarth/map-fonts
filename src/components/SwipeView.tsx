@@ -44,7 +44,7 @@ const SWIPE_THRESHOLD = 110;
 const STACK_GAP = 18;
 const STACK_SCALE_STEP = 0.035;
 const CARD_TRANSITION =
-  "transform 600ms cubic-bezier(0.22, 1, 0.36, 1), opacity 600ms cubic-bezier(0.22, 1, 0.36, 1)";
+  "transform 600ms cubic-bezier(0.4, 0, 0.6, 1), opacity 600ms cubic-bezier(0.4, 0, 0.6, 1)";
 
 const mapLabelNames = [
   "Ardena",
