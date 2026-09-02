@@ -52,7 +52,7 @@ const MapDropZone: FC<Props> = ({
   };
 
   return (
-    <div className={styles.container}>
+    <div className="hidden flex-col items-center gap-8 lg:flex">
       <div className={styles.colorGroup}>
         <div className={styles.text}>Labels color</div>
         <div className={styles.colorRow}>
