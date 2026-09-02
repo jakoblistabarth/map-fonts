@@ -337,7 +337,26 @@ const SwipeView: FC = () => {
     startX: 0,
     startY: 0,
   });
+  const touchStateRef = useRef<{
+    touchId: number | null;
+    startX: number;
+    startY: number;
+  }>({
+    touchId: null,
+    startX: 0,
+    startY: 0,
+  });
   const exitElRef = useRef<HTMLDivElement | null>(null);
+  const topCardRef = useRef<HTMLDivElement | null>(null);
+  // Mirror of `dragOffset`, so the native touch listeners below (which are
+  // attached once per card, not per render) and startExit always read the
+  // live offset instead of a stale closure value.
+  const dragOffsetRef = useRef({ x: 0, y: 0 });
+
+  const applyDragOffset = (next: { x: number; y: number }) => {
+    dragOffsetRef.current = next;
+    setDragOffset(next);
+  };
 
   // Load the font list once the query manager is ready, but only once per mount.
   useEffect(() => {
@@ -550,8 +569,8 @@ const SwipeView: FC = () => {
       id: exitIdRef.current,
       font,
       labels,
-      x: dragOffset.x,
-      y: dragOffset.y,
+      x: dragOffsetRef.current.x,
+      y: dragOffsetRef.current.y,
       direction,
       phase: "start",
     });
@@ -559,12 +578,15 @@ const SwipeView: FC = () => {
     // Advance the deck immediately: the "next" card smoothly slides up
     // into the current slot because it keeps the same DOM identity
     // (keyed by deck index) — only its slot/transform changes.
-    setDragOffset({ x: 0, y: 0 });
+    applyDragOffset({ x: 0, y: 0 });
     setIsDragging(false);
     setSwipeCount((previous) => previous + 1);
   };
 
+  // Touch is handled by the native listeners in the effect below, so ignore
+  // touch-derived pointer events here to avoid running both code paths.
   const handlePointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (event.pointerType === "touch") return;
     if (!currentFont || isAnimating) return;
     if (event.button !== 0) return;
 
@@ -578,30 +600,115 @@ const SwipeView: FC = () => {
   };
 
   const handlePointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (event.pointerType === "touch") return;
     if (!isDragging) return;
     if (pointerStateRef.current.pointerId !== event.pointerId) return;
 
     const x = event.clientX - pointerStateRef.current.startX;
     const y = event.clientY - pointerStateRef.current.startY;
 
-    setDragOffset({ x, y });
+    applyDragOffset({ x, y });
   };
 
   const handlePointerUp = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (event.pointerType === "touch") return;
     if (!isDragging) return;
     if (pointerStateRef.current.pointerId !== event.pointerId) return;
 
     pointerStateRef.current.pointerId = null;
-    const x = dragOffset.x;
+    endDrag();
+  };
+
+  // Shared tail of a drag: either past the threshold (swipe) or snap back.
+  const endDrag = () => {
+    const x = dragOffsetRef.current.x;
 
     if (Math.abs(x) >= SWIPE_THRESHOLD) {
       startExit(x > 0 ? "yes" : "no");
       return;
     }
 
-    setDragOffset({ x: 0, y: 0 });
+    applyDragOffset({ x: 0, y: 0 });
     setIsDragging(false);
   };
+
+  // iOS Safari never delivers a usable pointer-event drag here: it cancels the
+  // touch-derived pointer stream as soon as the gesture starts to look like a
+  // scroll or a swipe-back. Native touch listeners registered with
+  // { passive: false } let us call preventDefault() and keep the gesture.
+  // (React's own onTouchMove cannot: React attaches touchmove passively.)
+  // Deliberately no dependency array: the listeners must close over the
+  // current font / animation state, and re-bind when the top card changes.
+  useEffect(() => {
+    const element = topCardRef.current;
+    if (!element || activeTab !== "swipe") return;
+
+    const findTouch = (touches: TouchList, id: number) =>
+      Array.from(touches).find((touch) => touch.identifier === id);
+
+    const handleTouchStart = (event: TouchEvent) => {
+      if (!currentFont || isAnimating) return;
+      // Ignore additional fingers once a drag is under way.
+      if (touchStateRef.current.touchId !== null) return;
+
+      const touch = event.changedTouches[0];
+      if (!touch) return;
+
+      touchStateRef.current = {
+        touchId: touch.identifier,
+        startX: touch.clientX,
+        startY: touch.clientY,
+      };
+      setIsDragging(true);
+    };
+
+    const handleTouchMove = (event: TouchEvent) => {
+      const { touchId, startX, startY } = touchStateRef.current;
+      if (touchId === null) return;
+
+      const touch = findTouch(event.changedTouches, touchId);
+      if (!touch) return;
+
+      if (event.cancelable) event.preventDefault();
+      applyDragOffset({
+        x: touch.clientX - startX,
+        y: touch.clientY - startY,
+      });
+    };
+
+    const handleTouchEnd = (event: TouchEvent) => {
+      const { touchId } = touchStateRef.current;
+      if (touchId === null) return;
+      if (!findTouch(event.changedTouches, touchId)) return;
+
+      touchStateRef.current.touchId = null;
+      endDrag();
+    };
+
+    const handleTouchCancel = (event: TouchEvent) => {
+      const { touchId } = touchStateRef.current;
+      if (touchId === null) return;
+      if (!findTouch(event.changedTouches, touchId)) return;
+
+      touchStateRef.current.touchId = null;
+      applyDragOffset({ x: 0, y: 0 });
+      setIsDragging(false);
+    };
+
+    element.addEventListener("touchstart", handleTouchStart, {
+      passive: false,
+    });
+    element.addEventListener("touchmove", handleTouchMove, { passive: false });
+    element.addEventListener("touchend", handleTouchEnd);
+    element.addEventListener("touchcancel", handleTouchCancel);
+
+    return () => {
+      element.removeEventListener("touchstart", handleTouchStart);
+      element.removeEventListener("touchmove", handleTouchMove);
+      element.removeEventListener("touchend", handleTouchEnd);
+      element.removeEventListener("touchcancel", handleTouchCancel);
+    };
+  });
 
   const handleExitTransitionEnd = (
     event: React.TransitionEvent<HTMLDivElement>,
@@ -736,6 +843,7 @@ const SwipeView: FC = () => {
     return (
       <div
         key={deckIndex}
+        ref={slot === 0 ? topCardRef : undefined}
         style={{
           position: "absolute",
           inset: 0,
