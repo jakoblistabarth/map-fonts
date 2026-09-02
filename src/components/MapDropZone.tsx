@@ -1,4 +1,10 @@
-import { useRef, useState, type ChangeEvent, type DragEvent, type FC } from "react";
+import {
+  useRef,
+  useState,
+  type ChangeEvent,
+  type DragEvent,
+  type FC,
+} from "react";
 import styles from "./MapDropZone.module.css";
 
 type LabelColor = "black" | "white";
@@ -66,7 +72,9 @@ const MapDropZone: FC<Props> = ({
                 aria-label={`Set labels to ${color}`}
                 className={[
                   styles.colorButton,
-                  isSelected ? styles.colorButtonSelected : styles.colorButtonUnselected,
+                  isSelected
+                    ? styles.colorButtonSelected
+                    : styles.colorButtonUnselected,
                 ].join(" ")}
                 style={{
                   background: color,
@@ -124,7 +132,11 @@ const MapDropZone: FC<Props> = ({
       </div>
 
       {currentImageSrc && (
-        <button type="button" onClick={onReset} className={`${styles.text} ${styles.resetButton}`}>
+        <button
+          type="button"
+          onClick={onReset}
+          className={`${styles.text} ${styles.resetButton}`}
+        >
           Reset map
         </button>
       )}
