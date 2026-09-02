@@ -284,12 +284,7 @@ const getFixedStartFonts = (fonts: Font[]) => {
  * Component displays a list of font families as deck of cards for the user to swipe through.
  */
 const SwipeView: FC = () => {
-  const [status, setStatus] = useState("idle");
-  const manager = useQueryManager({
-    onStatusChange: (status) => setStatus(status),
-  });
-  //TODO: clean up state management
-  const [fontTagMatrix, setFontTagMatrix] = useState<[]>([]);
+  const manager = useQueryManager();
   const [activeTab, setActiveTab] = useState<TabKey>("swipe");
   const [swipeCount, setSwipeCount] = useState<number>(0);
   const [likedFonts, setLikedFonts] = useState<Font[]>([]);
@@ -297,7 +292,6 @@ const SwipeView: FC = () => {
     new Set(),
   );
   const [allFonts, setAllFonts] = useState<Font[]>([]);
-  const [deckFonts, setDeckFonts] = useState<Font[]>([]);
   const [recommendations, setRecommendations] = useState<Font[]>([]);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
@@ -344,16 +338,13 @@ const SwipeView: FC = () => {
   });
   const exitElRef = useRef<HTMLDivElement | null>(null);
 
-  // Set deck and allFonts once the query manager is ready, but only once per mount.
+  // Load the font list once the query manager is ready, but only once per mount.
   useEffect(() => {
     if (manager.isReady && !hasLoadedRef.current) {
       hasLoadedRef.current = true;
       manager
         .query("FROM family_metadata ORDER BY popularity DESC")
-        .then((result) => {
-          setAllFonts(result);
-          setDeckFonts(shuffle(result));
-        })
+        .then((result) => setAllFonts(result))
         .catch((error) => console.error("Error loading families:", error));
     }
   }, [manager.isReady]);
