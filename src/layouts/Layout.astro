@@ -14,15 +14,13 @@ import "../styles/global.css";
     <title>Map Fonts</title>
     <Font cssVariable="--font-sans" />
   </head>
-  <body class="bg-background">
+  <body class="bg-background margin-0 font-sans">
     <slot />
   </body>
 </html>
 
 <style is:global>
-  html,
-  body {
+  html {
     margin: 0;
-    font-family: var(--font-sans);
   }
 </style>

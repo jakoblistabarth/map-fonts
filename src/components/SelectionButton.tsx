@@ -4,12 +4,18 @@ import styles from "./SelectionButton.module.css";
 type Props = PropsWithChildren<{
   red?: boolean;
   onClick?: () => void;
+  className?: string;
 }>;
 
-const SelectionButton: FC<Props> = ({ children, onClick, red = false }) => {
+const SelectionButton: FC<Props> = ({
+  children,
+  onClick,
+  red = false,
+  className,
+}) => {
   return (
     <button
-      className={`${styles.button} ${red ? styles.red : ""}`}
+      className={`${styles.button} ${red ? styles.red : ""} ${className || ""}`}
       onClick={onClick}
       type="button"
     >

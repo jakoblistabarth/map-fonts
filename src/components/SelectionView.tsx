@@ -1,8 +1,14 @@
+import {
+  DownloadIcon,
+  HeartIcon,
+  RotateCcwIcon,
+  SparklesIcon,
+} from "lucide-react";
 import type { FC } from "react";
 import type { Font } from "./ExpertModeView";
+import FilterModeHint from "./FilterModeHint";
 import PreviewCard from "./PreviewCard";
 import SelectionButton from "./SelectionButton";
-import styles from "./SelectionView.module.css";
 
 type Props = {
   likedFonts: Font[];
@@ -16,57 +22,22 @@ const SelectionView: FC<Props> = ({
   recommendedFonts,
 }) => {
   return (
-    <div
-      style={{
-        width: "100%",
-        maxWidth: "840px",
-        display: "flex",
-        flexDirection: "column",
-        gap: "1rem",
-        padding: "0 0.25rem 1rem",
-      }}
-    >
-      <section
-        style={{
-          display: "flex",
-          justifyContent: "center",
-        }}
-      ></section>
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-          gap: "6rem",
-        }}
-      >
-        <section
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: "0.75rem",
-          }}
-        >
-          <div
-            style={{
-              position: "relative",
-            }}
-          >
-            <h2>You liked these typefaces</h2>
-            <div
-              style={{
-                position: "absolute",
-                right: "calc(100% + 1rem)",
-                top: "50%",
-                transform: "translateY(-50%)",
-                whiteSpace: "nowrap",
-              }}
-            >
-              {likedFonts.length > 0 && (
-                <SelectionButton red onClick={() => setLikedFonts([])}>
-                  Reset liked fonts
-                </SelectionButton>
-              )}
-            </div>
+    <div className="mx-auto flex max-w-5xl flex-col gap-15 px-5 pt-5 md:pt-10">
+      <div className="flex flex-col gap-20 md:flex-row">
+        <section className="flex flex-col gap-3">
+          <div className="flex items-baseline gap-5">
+            <HeartIcon className="self-center" />
+            <h2 className="font-bold">You liked these typefaces</h2>
+            {likedFonts.length > 0 && (
+              <SelectionButton
+                className="ml-auto flex gap-5"
+                red
+                onClick={() => setLikedFonts([])}
+              >
+                <RotateCcwIcon className="size-5 self-center" />
+                Reset
+              </SelectionButton>
+            )}
           </div>
           <div
             style={{
@@ -94,39 +65,10 @@ const SelectionView: FC<Props> = ({
         </section>
 
         {likedFonts.length > 0 && (
-          <section
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              gap: "0.75rem",
-            }}
-          >
-            <div
-              style={{
-                position: "relative",
-              }}
-            >
-              <h2>You might also like these ones</h2>
-              <div
-                style={{
-                  position: "absolute",
-                  left: "calc(100% + 1rem)",
-                  top: "50%",
-                  transform: "translateY(-50%)",
-                  whiteSpace: "nowrap",
-                }}
-              >
-                <a
-                  href={`https://fonts.google.com/share?selection.family=${[...recommendedFonts, ...likedFonts].map((font) => font.family.replace(/ /g, "+")).join("|")}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <SelectionButton>
-                    Get all fonts ({[...recommendedFonts, ...likedFonts].length}
-                    ) from fonts.google
-                  </SelectionButton>
-                </a>
-              </div>
+          <section className="flex flex-col gap-3">
+            <div className="flex items-baseline gap-5">
+              <SparklesIcon className="self-baseline-last" />
+              <h2 className="font-bold">You might also like these ones</h2>
             </div>
             <div
               style={{
@@ -148,6 +90,25 @@ const SelectionView: FC<Props> = ({
           </section>
         )}
       </div>
+      <section className="flex flex-col items-center gap-5">
+        <a
+          href={`https://fonts.google.com/share?selection.family=${[...recommendedFonts, ...likedFonts].map((font) => font.family.replace(/ /g, "+")).join("|")}`}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <SelectionButton className="flex gap-5">
+            <DownloadIcon className="size-5 self-center" />
+            Get fonts ({[...recommendedFonts, ...likedFonts].length})
+          </SelectionButton>
+        </a>
+        <p className="max-w-xl">
+          You can download the selected fonts from Google Fonts to use them in
+          your GIS or graphic software.
+        </p>
+      </section>
+      <section className="mx-auto max-w-prose">
+        <FilterModeHint />
+      </section>
     </div>
   );
 };

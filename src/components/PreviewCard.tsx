@@ -2,6 +2,7 @@ import type { FC } from "react";
 import type { Font } from "./ExpertModeView";
 import { useLazyFont } from "../hooks/useLazyFont";
 import styles from "./DeleteButton.module.css";
+import { Trash2Icon } from "lucide-react";
 
 type Props = {
   font: Font;
@@ -12,32 +13,18 @@ const PreviewCard: FC<Props> = ({ font, onDelete }) => {
   useLazyFont(font, true);
 
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        gap: "0.25rem",
-        padding: "0.5rem 0",
-        position: "relative",
-      }}
-    >
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: "0.25rem",
-        }}
-      >
+    <div className="flex flex-col gap-1 px-2">
+      <div className="flex items-center gap-5">
+        <span>{font.family}</span>
         {onDelete && (
           <button
             aria-label={`Remove ${font.family}`}
             className={styles.button}
             onClick={onDelete}
           >
-            ×
+            <Trash2Icon className="size-4" />
           </button>
         )}
-        <div style={{ fontSize: "1.05rem" }}>{font.family}</div>
       </div>
       <div
         style={{

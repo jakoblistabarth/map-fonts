@@ -40,7 +40,6 @@ type ExitingCard = {
 };
 
 const FIRST_UNLOCK_COUNT = 10;
-const TOP_SPACER_HEIGHT = "8rem";
 const SWIPE_THRESHOLD = 110;
 const STACK_GAP = 18;
 const STACK_SCALE_STEP = 0.035;
@@ -819,21 +818,20 @@ const SwipeView: FC = () => {
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-        gap: "1rem",
+        gap: "1.5rem",
         width: "100%",
-        minHeight: "100dvh",
-        padding: "0 0 1.5rem",
+        height: "100dvh",
+        overflow: "hidden",
+        padding: "0.75rem 0 1rem",
       }}
     >
       <div
         style={{
-          position: "fixed",
-          top: "0.75rem",
-          left: "50%",
-          transform: "translateX(-50%)",
+          position: "relative",
+          zIndex: 50,
+          flexShrink: 0,
           width: "min(420px, calc(100vw - 1.5rem))",
           maxWidth: "420px",
-          zIndex: 50,
           background: "#efefef",
           borderRadius: "999px",
           padding: "0.3rem",
@@ -860,17 +858,15 @@ const SwipeView: FC = () => {
           <span>Your fonts</span>
         </button>
       </div>
-      <div
-        aria-hidden="true"
-        style={{ height: TOP_SPACER_HEIGHT, width: "100%" }}
-      />
       {activeTab === "swipe" ? (
         <div
           style={{
             width: "100%",
+            flex: 1,
+            minHeight: 0,
             display: "flex",
             justifyContent: "center",
-            alignItems: "flex-start",
+            alignItems: "stretch",
             gap: "4rem",
           }}
         >
@@ -902,10 +898,14 @@ const SwipeView: FC = () => {
             style={{
               width: "100%",
               maxWidth: "420px",
+              height: "100%",
+              minHeight: 0,
               display: "flex",
               flexDirection: "column",
               alignItems: "center",
-              gap: "1rem",
+              justifyContent: "center",
+              gap: "0.75rem",
+              padding: "0 1rem",
             }}
           >
             {!selectionUnlocked && (
@@ -919,11 +919,13 @@ const SwipeView: FC = () => {
               style={{
                 position: "relative",
                 zIndex: 40,
-                width: "100%",
+                flex: "1 1 auto",
+                minHeight: 0,
+                maxHeight: "min(630px, calc((100vw - 1.5rem) * 1.5))",
                 aspectRatio: "2 / 3",
+                alignSelf: "center",
                 overflow: "visible",
-                marginTop: "0.25rem",
-                marginBottom: "0.75rem",
+                marginBottom: `${STACK_GAP * 2}px`,
               }}
             >
               {stackEntries.map((entry) =>
@@ -957,11 +959,23 @@ const SwipeView: FC = () => {
           </div>
         </div>
       ) : (
-        <SelectionView
-          likedFonts={likedFonts}
-          setLikedFonts={setLikedFonts}
-          recommendedFonts={recommendations}
-        />
+        <div
+          style={{
+            // Full width so the scrollbar sits at the window edge; the content
+            // inside keeps its own max-width and stays centred.
+            alignSelf: "stretch",
+            flex: 1,
+            minHeight: 0,
+            overflowY: "auto",
+            scrollbarGutter: "stable",
+          }}
+        >
+          <SelectionView
+            likedFonts={likedFonts}
+            setLikedFonts={setLikedFonts}
+            recommendedFonts={recommendations}
+          />
+        </div>
       )}
     </div>
   );

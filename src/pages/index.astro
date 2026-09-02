@@ -1,26 +1,8 @@
 ---
 import SwipeView from "../components/SwipeView";
 import Layout from "../layouts/Layout.astro";
-import { withBase } from "../utils/base";
 ---
 
 <Layout>
-  <div
-    style={{
-      display: "flex",
-      flexDirection: "column",
-      gap: "1em",
-      alignItems: "center",
-      minHeight: "100dvh",
-      justifyContent: "flex-start",
-      paddingTop: "0.5rem",
-    }}
-  >
-    <SwipeView client:load />
-    <a
-      href={withBase("expert-mode")}
-      style="border: 1px black solid; padding: .5em; border-radius: .5em; text-decoration: none;"
-      >Filter Mode</a
-    >
-  </div>
+  <SwipeView client:load />
 </Layout>
