@@ -835,7 +835,7 @@ const SwipeView: FC = () => {
           transform: "translateX(-50%)",
           width: "min(420px, calc(100vw - 1.5rem))",
           maxWidth: "420px",
-          zIndex: 30,
+          zIndex: 50,
           background: "#efefef",
           borderRadius: "999px",
           padding: "0.3rem",
@@ -948,6 +948,7 @@ const SwipeView: FC = () => {
             <div
               style={{
                 position: "relative",
+                zIndex: 40,
                 width: "100%",
                 aspectRatio: "2 / 3",
                 overflow: "visible",
