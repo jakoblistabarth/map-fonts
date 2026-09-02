@@ -13,7 +13,7 @@ import type { Font } from "./ExpertModeView";
 import SelectionView from "./SelectionView";
 import Skeleton from "./Skeleton";
 import SwipeButton from "./SwipeButton";
-import MapDropZone from "./MapDropZone";
+import PreviewControls from "./PreviewControls";
 import { HeartIcon, XIcon } from "lucide-react";
 
 type MapLabelStyleKey = "thin" | "regular" | "bold";
@@ -889,7 +889,7 @@ const SwipeView: FC = () => {
               gap: "0.5rem",
             }}
           >
-            <MapDropZone
+            <PreviewControls
               currentImageSrc={customMapImage}
               labelColor={labelColor}
               zoom={mapZoom}

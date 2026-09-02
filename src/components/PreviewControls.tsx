@@ -5,7 +5,7 @@ import {
   type DragEvent,
   type FC,
 } from "react";
-import styles from "./MapDropZone.module.css";
+import styles from "./PreviewControls.module.css";
 
 type LabelColor = "black" | "white";
 
@@ -19,7 +19,7 @@ type Props = {
   onZoomChange: (zoom: number) => void;
 };
 
-const MapDropZone: FC<Props> = ({
+const PreviewControls: FC<Props> = ({
   currentImageSrc,
   labelColor,
   zoom,
@@ -144,4 +144,4 @@ const MapDropZone: FC<Props> = ({
   );
 };
 
-export default MapDropZone;
+export default PreviewControls;
