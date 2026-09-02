@@ -15,6 +15,7 @@ import Skeleton from "./Skeleton";
 import SwipeButton from "./SwipeButton";
 import PreviewControls from "./PreviewControls";
 import { HeartIcon, XIcon } from "lucide-react";
+import SwipeProgressIndicator from "./SwipeProgressIndicator";
 
 type MapLabelStyleKey = "thin" | "regular" | "bold";
 
@@ -501,11 +502,6 @@ const SwipeView: FC = () => {
   };
 
   const selectionUnlocked = swipeCount >= FIRST_UNLOCK_COUNT;
-  const remainingUnlockSwipes = Math.max(0, FIRST_UNLOCK_COUNT - swipeCount);
-  const progressPercent = Math.min(
-    100,
-    (swipeCount / FIRST_UNLOCK_COUNT) * 100,
-  );
 
   useEffect(() => {
     if (!exitingCard || exitingCard.phase !== "start") return;
@@ -912,38 +908,10 @@ const SwipeView: FC = () => {
             }}
           >
             {!selectionUnlocked && (
-              <div
-                style={{
-                  width: "100%",
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "0.45rem",
-                }}
-              >
-                <div style={{ color: "#666", fontSize: "0.95rem" }}>
-                  Swipe {remainingUnlockSwipes} more times!
-                </div>
-                <div
-                  style={{
-                    position: "relative",
-                    width: "100%",
-                    height: "0.95rem",
-                    borderRadius: "999px",
-                    background: "#ececec",
-                    overflow: "hidden",
-                  }}
-                >
-                  <div
-                    style={{
-                      width: `${progressPercent}%`,
-                      height: "100%",
-                      borderRadius: "inherit",
-                      background: "#3348af",
-                      transition: "width 180ms ease",
-                    }}
-                  />
-                </div>
-              </div>
+              <SwipeProgressIndicator
+                swipeCount={swipeCount}
+                totalSwipes={FIRST_UNLOCK_COUNT}
+              />
             )}
 
             <div
