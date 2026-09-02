@@ -116,21 +116,22 @@ const shuffle = <T,>(items: T[]) => {
   return shuffled;
 };
 
+// How many labels get each style. Must sum to mapLabelNames.length.
+const mapLabelStyleCounts: Record<MapLabelStyleKey, number> = {
+  thin: 6,
+  regular: 4,
+  bold: 2,
+};
+
+const createStyleSlots = () =>
+  shuffle(
+    (Object.keys(mapLabelStyleCounts) as MapLabelStyleKey[]).flatMap((style) =>
+      Array.from({ length: mapLabelStyleCounts[style] }, () => style),
+    ),
+  );
+
 const createMapLabels = (): MapLabel[] => {
-  const styleSlots: MapLabelStyleKey[] = shuffle([
-    "thin",
-    "thin",
-    "thin",
-    "thin",
-    "thin",
-    "thin",
-    "regular",
-    "regular",
-    "regular",
-    "regular",
-    "bold",
-    "bold",
-  ]);
+  const styleSlots = createStyleSlots();
   const shuffledNames = shuffle(mapLabelNames);
   const renderedRects: Array<{
     left: number;
