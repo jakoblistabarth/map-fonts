@@ -153,7 +153,11 @@ const FilterLineChart: FC<Props> = ({ title, data, range, onRangeChange }) => {
           )}
         </div>
         <div className="flex items-center justify-between gap-2">
-          <span>{title}</span>
+          <div className="flex items-center gap-2">
+            <span className={range && "font-semibold"}>{title}</span>
+            {range && <span className="size-3 rounded-full bg-blue-800"></span>}
+          </div>
+
           <span className="flex items-center gap-2">
             {selection && (
               <span
@@ -166,12 +170,13 @@ const FilterLineChart: FC<Props> = ({ title, data, range, onRangeChange }) => {
               </span>
             )}
             <Button
-              variant="ghost"
-              size="icon-xs"
+              variant="secondary"
               aria-label={`Reset ${title} filter`}
+              icon-size="xs"
               title={`Reset ${title} filter`}
               disabled={!range}
               onClick={() => onRangeChange(undefined)}
+              className="aspect-square size-6 rounded-full"
             >
               <RotateCcwIcon />
             </Button>
