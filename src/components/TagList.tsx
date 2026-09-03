@@ -1,6 +1,6 @@
 import type { FC } from "react";
 import Button from "./button";
-import type { SelectedTags, TagCategory } from "./FontList";
+import type { SelectedTags, TagCategory } from "../hooks/useFontQuery";
 
 type Props = {
   tagsByCategory: TagCategory;

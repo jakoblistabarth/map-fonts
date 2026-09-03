@@ -1,35 +1,21 @@
-import {
-  type FC,
-  useCallback,
-  useEffect,
-  useState,
-  useTransition,
-} from "react";
-import { useQueryManager } from "../hooks/useQueryManager";
+import { useCallback, useEffect, useState, useTransition } from "react";
 import type { Font } from "../types/font";
 import {
   metricFilterQuery,
   type MetricKey,
   type MetricRanges,
 } from "../utils/metrics";
-import Collapsible from "./Collapsible";
-import FontResultList from "./FontResultList";
-import MetricList from "./MetricList";
-import TagList from "./TagList";
+import { useQueryManager } from "./useQueryManager";
 
 export type TagCategory = Record<string, string[]>;
 export type SelectedTags = Record<string, Set<string>>;
 
-type Props = {
-  font: Font | null;
-  setFont: (font: Font | null) => void;
-};
-
 /**
- * Component displays a list of font families filtered by selected tags.
- * It uses react-window for efficient rendering of large lists.
+ * Hook that queries the font families matching the selected tags and the
+ * brushed metric ranges. It owns the filter state so that the filter controls
+ * and the result list can live in separate parts of the layout.
  */
-const FontList: FC<Props> = ({ font, setFont }) => {
+export const useFontQuery = () => {
   const manager = useQueryManager();
 
   const [families, setFamilies] = useState<Font[]>([]);
@@ -87,7 +73,7 @@ const FontList: FC<Props> = ({ font, setFont }) => {
     }
   };
 
-  const toggleTag = (category: string, tag: string) => {
+  const toggleTag = useCallback((category: string, tag: string) => {
     setSelectedTags((prev) => {
       const categorySet = new Set(prev[category]);
       if (categorySet.has(tag)) {
@@ -97,7 +83,7 @@ const FontList: FC<Props> = ({ font, setFont }) => {
       }
       return { ...prev, [category]: categorySet };
     });
-  };
+  }, []);
 
   const queryFamilies = async () => {
     // Get all selected tags from all categories, flattened
@@ -150,47 +136,13 @@ const FontList: FC<Props> = ({ font, setFont }) => {
     }
   };
 
-  return (
-    <div
-      style={{
-        boxSizing: "border-box",
-        width: "100%",
-        display: "grid",
-        gridTemplateColumns: "2fr 1fr",
-        gap: "2em",
-        padding: "1em",
-      }}
-    >
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          gap: "1em",
-        }}
-      >
-        <Collapsible initialOpen={true} title="Filter by Metrics">
-          <MetricList ranges={metricRanges} setRange={setMetricRange} />
-        </Collapsible>
-        <Collapsible title="Filter by Tags">
-          <div>
-            {manager.isReady ? (
-              <TagList
-                tagsByCategory={tagsByCategory}
-                selectedTags={selectedTags}
-                toggleTag={toggleTag}
-              />
-            ) : (
-              <p>Loading database...</p>
-            )}
-          </div>
-        </Collapsible>
-      </div>
-
-      {manager.isReady && (
-        <FontResultList families={families} font={font} setFont={setFont} />
-      )}
-    </div>
-  );
+  return {
+    isReady: manager.isReady,
+    families,
+    tagsByCategory,
+    selectedTags,
+    toggleTag,
+    metricRanges,
+    setMetricRange,
+  };
 };
-
-export default FontList;
