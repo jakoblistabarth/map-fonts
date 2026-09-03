@@ -6,7 +6,7 @@ import { Card, CardContent } from "./ui/card";
 
 export const FilterModeHint: FC = () => {
   return (
-    <Card className="">
+    <Card className="text-base">
       <CardContent className="space-y-5">
         <div className="flex aspect-square size-12 items-center justify-center rounded-full border border-indigo-200">
           <RulerDimensionLineIcon className="stroke-indigo-400" />

@@ -22,7 +22,10 @@ const FontResultList: FC<Props> = ({ families, font, setFont }) => {
 
   return (
     <section className="flex min-h-0 flex-col gap-2 md:h-full">
-      <h3>Results ({families.length})</h3>
+      <h3 className="flex items-baseline justify-between gap-2">
+        Results
+        <span className="tabular-nums">{families.length.toLocaleString()}</span>
+      </h3>
       <div className="border-border flex h-47 min-h-0 w-full flex-col overflow-hidden rounded border md:h-auto md:flex-1">
         <div className="border-border bg-muted flex gap-2 border-b p-2 font-bold">
           <div className="flex-1">Family</div>

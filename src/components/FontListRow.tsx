@@ -7,7 +7,7 @@ import {
 } from "react";
 import { useLazyFont } from "../hooks/useLazyFont";
 import type { Font } from "../types/font";
-import Button from "./button";
+import { Button } from "./ui/button";
 
 type Props = {
   index: number;
@@ -78,19 +78,7 @@ const FontListRow: FC<Props> = ({
             }}
           >
             <span style={{ fontWeight: 700 }}>VAR</span>
-            <span
-              style={{
-                fontSize: "smaller",
-                border: "1px solid lightgrey",
-                width: "1.5em",
-                aspectRatio: "1",
-                borderRadius: "50%",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                margin: "-1px -1px -1px 0",
-              }}
-            >
+            <span className="-m-px flex h-6 w-6 items-center justify-center rounded-full border border-gray-300 text-sm lining-nums tabular-nums">
               {family.axes.length}
             </span>
           </div>
@@ -98,19 +86,7 @@ const FontListRow: FC<Props> = ({
       </div>
 
       <div style={{ textAlign: "right" }}>
-        <span
-          style={{
-            fontSize: "x-small",
-            fontWeight: 900,
-            background: "lightgrey",
-            borderRadius: "50%",
-            aspectRatio: "1",
-            width: "1.75em",
-            display: "inline-flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
+        <span className="inline-flex aspect-square w-7 items-center justify-center rounded-full bg-gray-200 text-xs font-bold lining-nums tabular-nums">
           {countAvailableFonts(family.fonts)}
         </span>
       </div>
