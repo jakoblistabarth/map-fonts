@@ -2,6 +2,7 @@ import React, { memo, type FC } from "react";
 import { List } from "react-window";
 import type { Font } from "../types/font";
 import FontListRow from "./FontListRow";
+import { Card } from "./ui/card";
 
 type Props = {
   families: Font[];
@@ -26,23 +27,22 @@ const FontResultList: FC<Props> = ({ families, font, setFont }) => {
         Results
         <span className="tabular-nums">{families.length.toLocaleString()}</span>
       </h3>
-      <div className="border-border flex h-47 min-h-0 w-full flex-col overflow-hidden rounded border md:h-auto md:flex-1">
-        <div className="border-border bg-muted flex gap-2 border-b p-2 font-bold">
-          <div className="flex-1">Family</div>
+      <Card className="p-0">
+        <div className="flex h-47 min-h-0 w-full flex-col overflow-hidden rounded md:h-auto md:flex-1">
+          {React.createElement(List as any, {
+            className: "w-full flex-1",
+            rowCount: families.length,
+            rowHeight: 50,
+            rowComponent: FontListRowMemo,
+            rowProps: {
+              families,
+              font,
+              setFont,
+              countAvailableFonts,
+            },
+          })}
         </div>
-        {React.createElement(List as any, {
-          className: "w-full flex-1",
-          rowCount: families.length,
-          rowHeight: 50,
-          rowComponent: FontListRowMemo,
-          rowProps: {
-            families,
-            font,
-            setFont,
-            countAvailableFonts,
-          },
-        })}
-      </div>
+      </Card>
     </section>
   );
 };

@@ -8,6 +8,7 @@ import {
 import { useLazyFont } from "../hooks/useLazyFont";
 import type { Font } from "../types/font";
 import { Button } from "./ui/button";
+import clsx from "clsx";
 
 type Props = {
   index: number;
@@ -32,6 +33,7 @@ const FontListRow: FC<Props> = ({
   const family = families[index];
   const [isVisible, setIsVisible] = useState(false);
   const rowRef = useRef<HTMLDivElement>(null);
+  const isActive = family.family === font?.family;
 
   useEffect(() => {
     const observer = new IntersectionObserver(([entry]) => {
@@ -92,14 +94,14 @@ const FontListRow: FC<Props> = ({
       </div>
 
       <Button
+        variant="ghost"
         onClick={() => setFont(family)}
-        style={{
-          background: family.family === font?.family ? "#007bff" : "#fff",
-          color: family.family === font?.family ? "white" : "black",
-          whiteSpace: "nowrap",
-        }}
+        className={clsx(
+          "whitespace-nowrap",
+          isActive && "bg-blue-500 text-white",
+        )}
       >
-        Use
+        Preview
       </Button>
     </div>
   );

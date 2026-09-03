@@ -20,9 +20,14 @@ const FontSample: FC<Props> = ({ font }) => {
   if (!font.fonts) return <>no fonts found</>;
 
   return (
-    <div>
-      <span id="sample" style={{ fontFamily: font.family, fontSize: "2rem" }}>
-        Map Labels set in "{font.family}".
+    <div className="flex flex-col items-center gap-1">
+      <span className="text-gray-500">Map Labels set in</span>
+      <span
+        id="sample"
+        className="text-4xl"
+        style={{ fontFamily: font.family }}
+      >
+        {font.family}.
       </span>
     </div>
   );
