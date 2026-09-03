@@ -2,8 +2,9 @@ import { curveCardinal } from "@visx/curve";
 import { AnimatedAreaSeries, buildChartTheme, XYChart } from "@visx/xychart";
 import { useParentSize } from "@visx/responsive";
 import { format } from "d3-format";
-import { useMemo, useRef, useState, type FC, type PointerEvent } from "react";
+import { useMemo, type FC } from "react";
 import { RotateCcwIcon } from "lucide-react";
+import { useBrushGesture } from "../hooks/useBrushGesture";
 import { BIN_STEP, type MetricBin } from "../utils/metrics";
 import { Button } from "./ui/button";
 import { Card, CardContent } from "./ui/card";
@@ -18,8 +19,6 @@ type Props = {
 
 const HEIGHT = 75;
 const MARGIN = { top: 2, right: 2, bottom: 2, left: 2 };
-/** Drags shorter than this are treated as a click, which clears the brush. */
-const MIN_DRAG_PX = 3;
 
 const formatValue = format(".1%");
 
@@ -47,15 +46,13 @@ const clamp = (value: number, min: number, max: number) =>
  * across the chart brushes a range of values, clicking clears it again.
  */
 const FilterLineChart: FC<Props> = ({ title, data, range, onRangeChange }) => {
-  // The chart fills whatever width its container has; the brush needs the same
-  // number to convert between pixels and values.
+  // `width` sizes the chart and converts pixels to values.
   const { parentRef, node, width } = useParentSize({ debounceTime: 0 });
-  const [draft, setDraft] = useState<[number, number]>();
 
   const innerWidth = Math.max(0, width - MARGIN.left - MARGIN.right);
 
-  // The last bin covers [bin_start, bin_start + BIN_STEP), so the domain has to
-  // extend one step beyond it for the brush to be able to select it entirely.
+  // The last bin covers [bin_start, bin_start + BIN_STEP), so the domain needs
+  // one extra step for that bin to be selectable.
   const domain = useMemo<[number, number]>(() => {
     const values = data.map(xAccessor);
     return [Math.min(...values), Math.max(...values) + BIN_STEP];
@@ -66,7 +63,7 @@ const FilterLineChart: FC<Props> = ({ title, data, range, onRangeChange }) => {
     if (!rect || innerWidth === 0) return domain[0];
     const x = clamp(clientX - rect.left - MARGIN.left, 0, innerWidth);
     const [min, max] = domain;
-    // Snap to bin edges so the selection lines up with what the chart shows.
+    // Snap to bin edges so the selection lines up with the chart.
     const value = min + (x / innerWidth) * (max - min);
     return clamp(Math.round(value / BIN_STEP) * BIN_STEP, min, max);
   };
@@ -76,65 +73,11 @@ const FilterLineChart: FC<Props> = ({ title, data, range, onRangeChange }) => {
     return MARGIN.left + ((value - min) / (max - min)) * innerWidth;
   };
 
-  const drag = useRef<{
-    pointerId: number;
-    value: number;
-    clientX: number;
-  }>(null);
-
-  /** Forget the running drag without committing it. */
-  const cancelDrag = (event: PointerEvent<HTMLDivElement>) => {
-    if (!drag.current) return;
-    const { pointerId } = drag.current;
-    drag.current = null;
-    if (event.currentTarget.hasPointerCapture(pointerId)) {
-      event.currentTarget.releasePointerCapture(pointerId);
-    }
-    setDraft(undefined);
-  };
-
-  const handlePointerDown = (event: PointerEvent<HTMLDivElement>) => {
-    // Ignore secondary buttons and any pointer joining a running drag.
-    if (event.button !== 0 || drag.current) return;
-    event.currentTarget.setPointerCapture(event.pointerId);
-    drag.current = {
-      pointerId: event.pointerId,
-      value: toValue(event.clientX),
-      clientX: event.clientX,
-    };
-    setDraft(undefined);
-  };
-
-  const handlePointerMove = (event: PointerEvent<HTMLDivElement>) => {
-    const start = drag.current;
-    if (!start || start.pointerId !== event.pointerId) return;
-    // The button came back up without us seeing it (released outside the
-    // window, a context menu, …). Without this the bare cursor would keep
-    // brushing on hover.
-    if ((event.buttons & 1) === 0) {
-      cancelDrag(event);
-      return;
-    }
-    const value = toValue(event.clientX);
-    setDraft([Math.min(start.value, value), Math.max(start.value, value)]);
-  };
-
-  const handlePointerUp = (event: PointerEvent<HTMLDivElement>) => {
-    const start = drag.current;
-    if (!start || start.pointerId !== event.pointerId) return;
-    drag.current = null;
-    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
-      event.currentTarget.releasePointerCapture(event.pointerId);
-    }
-    setDraft(undefined);
-    if (Math.abs(event.clientX - start.clientX) < MIN_DRAG_PX) {
-      // A click (rather than a drag) resets the filter for this metric.
-      onRangeChange(undefined);
-      return;
-    }
-    const value = toValue(event.clientX);
-    onRangeChange([Math.min(start.value, value), Math.max(start.value, value)]);
-  };
+  const { draft, brushProps } = useBrushGesture({
+    node,
+    toValue,
+    onCommit: onRangeChange,
+  });
 
   const selection = draft ?? range;
 
@@ -143,11 +86,7 @@ const FilterLineChart: FC<Props> = ({ title, data, range, onRangeChange }) => {
       <CardContent className="flex flex-col gap-2">
         <div
           ref={parentRef}
-          onPointerDown={handlePointerDown}
-          onPointerMove={handlePointerMove}
-          onPointerUp={handlePointerUp}
-          onPointerCancel={cancelDrag}
-          onLostPointerCapture={cancelDrag}
+          {...brushProps}
           className="relative w-full cursor-ew-resize touch-none"
           style={{
             height: HEIGHT,
@@ -175,8 +114,8 @@ const FilterLineChart: FC<Props> = ({ title, data, range, onRangeChange }) => {
             </XYChart>
           )}
           {selection && (
-            // Dim everything outside the brushed range. Pointer events stay
-            // with the chart below so the tooltip keeps working while brushing.
+            // Dim outside the brushed range; pointer events stay with the
+            // chart below so the tooltip keeps working.
             <svg
               width={width}
               height={HEIGHT}
