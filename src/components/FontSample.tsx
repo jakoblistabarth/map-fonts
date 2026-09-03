@@ -1,5 +1,5 @@
 import { type FC } from "react";
-import type { Font } from "./ExpertModeView";
+import type { Font } from "../types/font";
 
 type Props = {
   font: Font | null;

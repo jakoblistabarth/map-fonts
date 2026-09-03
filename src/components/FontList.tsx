@@ -8,16 +8,16 @@ import React, {
 } from "react";
 import { List } from "react-window";
 import { useQueryManager } from "../hooks/useQueryManager";
-import type { Font } from "./ExpertModeView";
-import FontListRow from "./FontListRow";
-import TagList from "./TagList";
-import Collapsible from "./Collapsible";
-import MetricList from "./MetricList";
+import type { Font } from "../types/font";
 import {
   metricFilterQuery,
   type MetricKey,
   type MetricRanges,
 } from "../utils/metrics";
+import Collapsible from "./Collapsible";
+import FontListRow from "./FontListRow";
+import MetricList from "./MetricList";
+import TagList from "./TagList";
 
 export type TagCategory = Record<string, string[]>;
 export type SelectedTags = Record<string, Set<string>>;

@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import type { Font } from "../components/ExpertModeView";
+import type { Font } from "../types/font";
 
 /**
  * Custom hook to lazily load a font's stylesheet when it becomes visible in the viewport.

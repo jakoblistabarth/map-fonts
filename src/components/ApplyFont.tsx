@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useMap } from "react-map-gl/maplibre";
-import type { Font } from "./ExpertModeView";
+import type { Font } from "../types/font";
 
 export default function ApplyFont({ font }: { font: Font | null }) {
   const { current: mapRef } = useMap();

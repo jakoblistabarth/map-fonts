@@ -1,3 +1,4 @@
+import { HeartIcon, XIcon } from "lucide-react";
 import React, {
   useEffect,
   useMemo,
@@ -9,12 +10,11 @@ import React, {
 import mapEurope from "../assets/map_europe.png";
 import { useLazyFont } from "../hooks/useLazyFont";
 import { useQueryManager } from "../hooks/useQueryManager";
-import type { Font } from "./ExpertModeView";
+import type { Font } from "../types/font";
+import PreviewControls from "./PreviewControls";
 import SelectionView from "./SelectionView";
 import Skeleton from "./Skeleton";
 import SwipeButton from "./SwipeButton";
-import PreviewControls from "./PreviewControls";
-import { HeartIcon, XIcon } from "lucide-react";
 import SwipeProgressIndicator from "./SwipeProgressIndicator";
 
 type MapLabelStyleKey = "thin" | "regular" | "bold";

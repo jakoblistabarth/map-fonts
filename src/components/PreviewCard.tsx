@@ -1,8 +1,8 @@
-import type { FC } from "react";
-import type { Font } from "./ExpertModeView";
-import { useLazyFont } from "../hooks/useLazyFont";
-import styles from "./DeleteButton.module.css";
 import { Trash2Icon } from "lucide-react";
+import type { FC } from "react";
+import { useLazyFont } from "../hooks/useLazyFont";
+import type { Font } from "../types/font";
+import styles from "./DeleteButton.module.css";
 
 type Props = {
   font: Font;

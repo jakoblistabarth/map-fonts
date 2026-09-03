@@ -5,8 +5,8 @@ import {
   type CSSProperties,
   type FC,
 } from "react";
-import type { Font } from "./ExpertModeView";
 import { useLazyFont } from "../hooks/useLazyFont";
+import type { Font } from "../types/font";
 import Button from "./button";
 
 type Props = {

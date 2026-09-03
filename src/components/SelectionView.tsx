@@ -5,7 +5,7 @@ import {
   SparklesIcon,
 } from "lucide-react";
 import type { FC } from "react";
-import type { Font } from "./ExpertModeView";
+import type { Font } from "../types/font";
 import FilterModeHint from "./FilterModeHint";
 import PreviewCard from "./PreviewCard";
 import SelectionButton from "./SelectionButton";
