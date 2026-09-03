@@ -753,8 +753,6 @@ const SwipeView: FC = () => {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          fontSize: "1.5em",
-          fontFamily: font.family,
           overflow: "hidden",
           background: "#fff",
           transition,
