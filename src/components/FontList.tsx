@@ -1,12 +1,10 @@
-import React, {
+import {
   type FC,
-  memo,
   useCallback,
   useEffect,
   useState,
   useTransition,
 } from "react";
-import { List } from "react-window";
 import { useQueryManager } from "../hooks/useQueryManager";
 import type { Font } from "../types/font";
 import {
@@ -15,7 +13,7 @@ import {
   type MetricRanges,
 } from "../utils/metrics";
 import Collapsible from "./Collapsible";
-import FontListRow from "./FontListRow";
+import FontResultList from "./FontResultList";
 import MetricList from "./MetricList";
 import TagList from "./TagList";
 
@@ -27,24 +25,16 @@ type Props = {
   setFont: (font: Font | null) => void;
 };
 
-const FontListRowMemo = memo(FontListRow);
-
 /**
  * Component displays a list of font families filtered by selected tags.
  * It uses react-window for efficient rendering of large lists.
  */
 const FontList: FC<Props> = ({ font, setFont }) => {
-  const manager = useQueryManager({
-    onStatusChange: (status) => setStatus(status),
-  });
+  const manager = useQueryManager();
 
-  const [status, setStatus] = useState("Initializing...");
   const [families, setFamilies] = useState<Font[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [isPending, startTransition] = useTransition();
-  const [selectedTags, setSelectedTags] = useState<Record<string, Set<string>>>(
-    {},
-  );
+  const [, startTransition] = useTransition();
+  const [selectedTags, setSelectedTags] = useState<SelectedTags>({});
   const [tagsByCategory, setTagsByCategory] = useState<TagCategory>({});
   const [metricRanges, setMetricRanges] = useState<MetricRanges>({});
 
@@ -74,7 +64,7 @@ const FontList: FC<Props> = ({ font, setFont }) => {
     if (manager.isReady && Object.keys(tagsByCategory).length > 0) {
       queryFamilies();
     }
-  }, [selectedTags, metricRanges, manager.isReady]);
+  }, [selectedTags, metricRanges, manager.isReady, tagsByCategory]);
 
   const loadAvailableTags = async () => {
     try {
@@ -82,23 +72,16 @@ const FontList: FC<Props> = ({ font, setFont }) => {
         "SELECT DISTINCT tag, tag_category FROM tags ORDER BY tag_category, tag",
       );
 
-      const tagsByCategory = result.reduce<TagCategory>(
-        (acc: TagCategory, row: { tag: string; tag_category: string }) => {
-          const cat = row.tag_category;
-          (acc[cat] ??= []).push(row.tag);
-          return acc;
-        },
-        {},
+      setTagsByCategory(
+        result.reduce<TagCategory>(
+          (acc: TagCategory, row: { tag: string; tag_category: string }) => {
+            const cat = row.tag_category;
+            (acc[cat] ??= []).push(row.tag);
+            return acc;
+          },
+          {},
+        ),
       );
-
-      setTagsByCategory(tagsByCategory);
-
-      // Initialize selectedTags as empty sets
-      const initial: Record<string, Set<string>> = {};
-      Object.keys(tagsByCategory).forEach((category) => {
-        initial[category] = new Set();
-      });
-      setSelectedTags(initial);
     } catch (err) {
       console.error("Failed to load tags:", err);
     }
@@ -106,29 +89,21 @@ const FontList: FC<Props> = ({ font, setFont }) => {
 
   const toggleTag = (category: string, tag: string) => {
     setSelectedTags((prev) => {
-      const updated = { ...prev };
-      const categorySet = new Set(updated[category]);
+      const categorySet = new Set(prev[category]);
       if (categorySet.has(tag)) {
         categorySet.delete(tag);
       } else {
         categorySet.add(tag);
       }
-      updated[category] = categorySet;
-      return updated;
+      return { ...prev, [category]: categorySet };
     });
   };
 
-  const countAvailableFonts = useCallback((fonts: Font["fonts"]) => {
-    if (!fonts) return 0;
-    return Object.values(fonts).filter(Boolean).length;
-  }, []);
-
   const queryFamilies = async () => {
     // Get all selected tags from all categories, flattened
-    const selectedTagArray: string[] = [];
-    Object.values(selectedTags).forEach((tagSet) => {
-      tagSet.forEach((tag) => selectedTagArray.push(tag));
-    });
+    const selectedTagArray = Object.values(selectedTags).flatMap((tagSet) => [
+      ...tagSet,
+    ]);
 
     // Families that have at least one design space location within every
     // brushed metric range.
@@ -137,7 +112,6 @@ const FontList: FC<Props> = ({ font, setFont }) => {
       ? `INNER JOIN (${metricFilter}) mf ON mf.family = fm.family`
       : "";
 
-    setLoading(true);
     try {
       let result;
 
@@ -168,26 +142,11 @@ const FontList: FC<Props> = ({ font, setFont }) => {
         `);
       }
 
-      const criteria = [
-        selectedTagArray.length > 0 &&
-          `ALL selected tags (weight > 60): ${selectedTagArray.join(", ")}`,
-        metricFilter && "the brushed metric ranges",
-      ].filter(Boolean);
-
-      setStatus(
-        criteria.length === 0
-          ? `Showing all ${result.length} font families`
-          : `Found ${result.length} families matching ${criteria.join(" and ")}`,
-      );
-
       startTransition(() => {
         setFamilies(result);
       });
-    } catch (err: any) {
-      setStatus(`Error: ${err.message}`);
+    } catch (err) {
       console.error("Query error:", err);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -228,62 +187,7 @@ const FontList: FC<Props> = ({ font, setFont }) => {
       </div>
 
       {manager.isReady && (
-        <>
-          {families.length > 0 ? (
-            <section>
-              <h3>Results ({families.length})</h3>
-              <div
-                style={{
-                  border: "1px solid #ccc",
-                  borderRadius: "4px",
-                  overflow: "hidden",
-                  display: "flex",
-                  flexDirection: "column",
-                  height: "500px",
-                  width: "100%",
-                }}
-              >
-                <div
-                  style={{
-                    display: "flex",
-                    gap: "0.5rem",
-                    borderBottom: "1px solid #ccc",
-                    background: "#f0f0f0",
-                    padding: "0.5rem",
-                    fontWeight: "bold",
-                    position: "sticky",
-                    top: 0,
-                    zIndex: 1,
-                  }}
-                >
-                  <div style={{ flex: 1 }}>Family</div>
-                </div>
-                <div
-                  style={{
-                    flex: 1,
-                    width: "100%",
-                    overflow: "auto",
-                  }}
-                >
-                  {React.createElement(List as any, {
-                    height: 430,
-                    rowCount: families.length,
-                    rowHeight: 50,
-                    rowComponent: FontListRowMemo,
-                    rowProps: {
-                      families,
-                      font,
-                      setFont,
-                      countAvailableFonts,
-                    },
-                  })}
-                </div>
-              </div>
-            </section>
-          ) : (
-            <div>no matching fonts </div>
-          )}
-        </>
+        <FontResultList families={families} font={font} setFont={setFont} />
       )}
     </div>
   );
