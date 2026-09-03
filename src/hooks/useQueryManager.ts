@@ -105,4 +105,4 @@ export const useQueryManager = (
     () => ({ isReady, query, prepare }),
     [isReady, query, prepare],
   );
-}
+};

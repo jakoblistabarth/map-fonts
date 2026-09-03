@@ -8,6 +8,7 @@ import React, {
   type FC,
 } from "react";
 import mapEurope from "../assets/map_europe.png";
+import { useDragGesture } from "../hooks/useDragGesture";
 import { useLazyFont } from "../hooks/useLazyFont";
 import { useQueryManager } from "../hooks/useQueryManager";
 import type { Font } from "../types/font";
@@ -294,8 +295,6 @@ const SwipeView: FC = () => {
   );
   const [allFonts, setAllFonts] = useState<Font[]>([]);
   const [recommendations, setRecommendations] = useState<Font[]>([]);
-  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
-  const [isDragging, setIsDragging] = useState(false);
   const [exitingCard, setExitingCard] = useState<ExitingCard | null>(null);
   const [customMapImage, setCustomMapImage] = useState<string | null>(null);
   const [labelColor, setLabelColor] = useState<"black" | "white">("black");
@@ -328,35 +327,10 @@ const SwipeView: FC = () => {
   const hasLoadedRef = useRef(false);
   const labelCacheRef = useRef(new Map<string, MapLabel[]>());
   const exitIdRef = useRef(0);
-  const pointerStateRef = useRef<{
-    pointerId: number | null;
-    startX: number;
-    startY: number;
-  }>({
-    pointerId: null,
-    startX: 0,
-    startY: 0,
-  });
-  const touchStateRef = useRef<{
-    touchId: number | null;
-    startX: number;
-    startY: number;
-  }>({
-    touchId: null,
-    startX: 0,
-    startY: 0,
-  });
   const exitElRef = useRef<HTMLDivElement | null>(null);
-  const topCardRef = useRef<HTMLDivElement | null>(null);
-  // Mirror of `dragOffset`, so the native touch listeners below (which are
-  // attached once per card, not per render) and startExit always read the
-  // live offset instead of a stale closure value.
-  const dragOffsetRef = useRef({ x: 0, y: 0 });
-
-  const applyDragOffset = (next: { x: number; y: number }) => {
-    dragOffsetRef.current = next;
-    setDragOffset(next);
-  };
+  // State rather than a ref, so the drag gesture re-binds its touch listener
+  // when the top card changes.
+  const [topCard, setTopCard] = useState<HTMLDivElement | null>(null);
 
   // Load the font list once the query manager is ready, but only once per mount.
   useEffect(() => {
@@ -539,7 +513,10 @@ const SwipeView: FC = () => {
     return () => cancelAnimationFrame(id);
   }, [exitingCard]);
 
-  const startExit = (direction: SwipeDirection) => {
+  const startExit = (
+    direction: SwipeDirection,
+    from: { x: number; y: number } = { x: 0, y: 0 },
+  ) => {
     if (!currentFont || isAnimating) return;
 
     const font = currentFont;
@@ -569,8 +546,8 @@ const SwipeView: FC = () => {
       id: exitIdRef.current,
       font,
       labels,
-      x: dragOffsetRef.current.x,
-      y: dragOffsetRef.current.y,
+      x: from.x,
+      y: from.y,
       direction,
       phase: "start",
     });
@@ -578,136 +555,22 @@ const SwipeView: FC = () => {
     // Advance the deck immediately: the "next" card smoothly slides up
     // into the current slot because it keeps the same DOM identity
     // (keyed by deck index) — only its slot/transform changes.
-    applyDragOffset({ x: 0, y: 0 });
-    setIsDragging(false);
     setSwipeCount((previous) => previous + 1);
   };
 
-  // Touch is handled by the native listeners in the effect below, so ignore
-  // touch-derived pointer events here to avoid running both code paths.
-  const handlePointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
-    if (event.pointerType === "touch") return;
-    if (!currentFont || isAnimating) return;
-    if (event.button !== 0) return;
-
-    event.currentTarget.setPointerCapture(event.pointerId);
-    pointerStateRef.current = {
-      pointerId: event.pointerId,
-      startX: event.clientX,
-      startY: event.clientY,
-    };
-    setIsDragging(true);
-  };
-
-  const handlePointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
-    if (event.pointerType === "touch") return;
-    if (!isDragging) return;
-    if (pointerStateRef.current.pointerId !== event.pointerId) return;
-
-    const x = event.clientX - pointerStateRef.current.startX;
-    const y = event.clientY - pointerStateRef.current.startY;
-
-    applyDragOffset({ x, y });
-  };
-
-  const handlePointerUp = (event: React.PointerEvent<HTMLDivElement>) => {
-    if (event.pointerType === "touch") return;
-    if (!isDragging) return;
-    if (pointerStateRef.current.pointerId !== event.pointerId) return;
-
-    pointerStateRef.current.pointerId = null;
-    endDrag();
-  };
-
-  // Shared tail of a drag: either past the threshold (swipe) or snap back.
-  const endDrag = () => {
-    const x = dragOffsetRef.current.x;
-
-    if (Math.abs(x) >= SWIPE_THRESHOLD) {
-      startExit(x > 0 ? "yes" : "no");
-      return;
-    }
-
-    applyDragOffset({ x: 0, y: 0 });
-    setIsDragging(false);
-  };
-
-  // iOS Safari never delivers a usable pointer-event drag here: it cancels the
-  // touch-derived pointer stream as soon as the gesture starts to look like a
-  // scroll or a swipe-back. Native touch listeners registered with
-  // { passive: false } let us call preventDefault() and keep the gesture.
-  // (React's own onTouchMove cannot: React attaches touchmove passively.)
-  // Deliberately no dependency array: the listeners must close over the
-  // current font / animation state, and re-bind when the top card changes.
-  useEffect(() => {
-    const element = topCardRef.current;
-    if (!element || activeTab !== "swipe") return;
-
-    const findTouch = (touches: TouchList, id: number) =>
-      Array.from(touches).find((touch) => touch.identifier === id);
-
-    const handleTouchStart = (event: TouchEvent) => {
-      if (!currentFont || isAnimating) return;
-      // Ignore additional fingers once a drag is under way.
-      if (touchStateRef.current.touchId !== null) return;
-
-      const touch = event.changedTouches[0];
-      if (!touch) return;
-
-      touchStateRef.current = {
-        touchId: touch.identifier,
-        startX: touch.clientX,
-        startY: touch.clientY,
-      };
-      setIsDragging(true);
-    };
-
-    const handleTouchMove = (event: TouchEvent) => {
-      const { touchId, startX, startY } = touchStateRef.current;
-      if (touchId === null) return;
-
-      const touch = findTouch(event.changedTouches, touchId);
-      if (!touch) return;
-
-      if (event.cancelable) event.preventDefault();
-      applyDragOffset({
-        x: touch.clientX - startX,
-        y: touch.clientY - startY,
-      });
-    };
-
-    const handleTouchEnd = (event: TouchEvent) => {
-      const { touchId } = touchStateRef.current;
-      if (touchId === null) return;
-      if (!findTouch(event.changedTouches, touchId)) return;
-
-      touchStateRef.current.touchId = null;
-      endDrag();
-    };
-
-    const handleTouchCancel = (event: TouchEvent) => {
-      const { touchId } = touchStateRef.current;
-      if (touchId === null) return;
-      if (!findTouch(event.changedTouches, touchId)) return;
-
-      touchStateRef.current.touchId = null;
-      applyDragOffset({ x: 0, y: 0 });
-      setIsDragging(false);
-    };
-
-    element.addEventListener("touchstart", handleTouchStart, {
-      passive: false,
-    });
-    element.addEventListener("touchmove", handleTouchMove, { passive: false });
-    element.addEventListener("touchend", handleTouchEnd);
-    element.addEventListener("touchcancel", handleTouchCancel);
-
-    return () => {
-      element.removeEventListener("touchstart", handleTouchStart);
-      element.removeEventListener("touchmove", handleTouchMove);
-      element.removeEventListener("touchend", handleTouchEnd);
-      element.removeEventListener("touchcancel", handleTouchCancel);
-    };
+  const {
+    isDragging,
+    offset: dragOffset,
+    dragProps,
+  } = useDragGesture({
+    node: topCard,
+    canStart: () => Boolean(currentFont) && !isAnimating,
+    // Past the threshold the card flies off from where it was released,
+    // otherwise the hook resets the offset and it snaps back.
+    onEnd: ({ dx, dy }) => {
+      if (Math.abs(dx) < SWIPE_THRESHOLD) return;
+      startExit(dx > 0 ? "yes" : "no", { x: dx, y: dy });
+    },
   });
 
   const handleExitTransitionEnd = (
@@ -843,7 +706,7 @@ const SwipeView: FC = () => {
     return (
       <div
         key={deckIndex}
-        ref={slot === 0 ? topCardRef : undefined}
+        ref={slot === 0 ? setTopCard : undefined}
         style={{
           position: "absolute",
           inset: 0,
@@ -862,10 +725,7 @@ const SwipeView: FC = () => {
           transform,
           zIndex,
         }}
-        onPointerDown={slot === 0 ? handlePointerDown : undefined}
-        onPointerMove={slot === 0 ? handlePointerMove : undefined}
-        onPointerUp={slot === 0 ? handlePointerUp : undefined}
-        onPointerCancel={slot === 0 ? handlePointerUp : undefined}
+        {...(slot === 0 ? dragProps : {})}
       >
         {renderCardContent(font, labels)}
       </div>
