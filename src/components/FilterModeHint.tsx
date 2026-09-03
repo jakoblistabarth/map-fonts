@@ -19,7 +19,7 @@ export const FilterModeHint: FC = () => {
           on its metrics, try the <em>Filter Mode</em> to find the perfect font
           for your map.
         </p>
-        <a href={withBase("expert-mode")}>
+        <a href={withBase("filter-mode")}>
           <Button className="flex gap-2">
             <ArrowBigRightDashIcon />
             <span>Go to Filter Mode</span>

@@ -1,5 +1,5 @@
 /**
- * The font metrics that can be explored (and filtered by) in expert mode.
+ * The font metrics that can be explored (and filtered by).
  *
  * Every metric is relative to the font's units per em, so all of them share the
  * same unit and bin width. A row in `font_metrics` is a single location in a

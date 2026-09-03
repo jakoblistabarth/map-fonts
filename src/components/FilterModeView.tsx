@@ -1,11 +1,11 @@
 import { useState } from "react";
-import type { Font } from "../types/font";
 import DemoMap from "./DemoMap";
 import FontList from "./FontList";
 import FontSample from "./FontSample";
+import type { Font } from "../types/font";
 
-/** Component displays the expert mode interface for font selection and preview based on metrics (and tags?). */
-const ExpertModeView = () => {
+/** Component displays the filter mode interface for font selection and preview based on metrics (and tags?). */
+const FilterModeView = () => {
   const [font, setFont] = useState<Font | null>(null);
   return (
     <div
@@ -23,4 +23,4 @@ const ExpertModeView = () => {
   );
 };
 
-export default ExpertModeView;
+export default FilterModeView;
