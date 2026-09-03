@@ -8,10 +8,10 @@ export const FilterModeHint: FC = () => {
   return (
     <Card className="text-base">
       <CardContent className="space-y-5">
-        <div className="flex aspect-square size-12 items-center justify-center rounded-full border border-indigo-200">
-          <RulerDimensionLineIcon className="stroke-indigo-400" />
+        <div className="flex aspect-square size-12 items-center justify-center rounded-full border border-[#b9c2e1]">
+          <RulerDimensionLineIcon className="stroke-[#304cb3]" />
         </div>
-        <h2 className="mb-5 text-lg font-bold text-indigo-500">
+        <h2 className="mb-5 text-lg font-bold text-[#304cb3]">
           Not yet what you were looking for?
         </h2>
         <p>

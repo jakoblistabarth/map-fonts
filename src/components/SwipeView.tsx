@@ -674,7 +674,7 @@ const SwipeView: FC = () => {
           {label.name}
         </div>
       ))}
-      <div className="absolute bottom-5 z-10 rounded-lg bg-zinc-700 px-5 py-2">
+      <div className="absolute bottom-5 z-10 rounded-full bg-[#292929] px-5 py-2">
         <span className="text-taupe-50">{font.family}</span>
       </div>
     </>
