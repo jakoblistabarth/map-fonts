@@ -1,5 +1,5 @@
 import { withBase } from "@/utils/base";
-import { ArrowBigRightDashIcon, RulerDimensionLineIcon } from "lucide-react";
+import { ArrowRight, RulerDimensionLineIcon } from "lucide-react";
 import type { FC } from "react";
 import { Button } from "./ui/button";
 import { Card, CardContent } from "./ui/card";
@@ -21,7 +21,7 @@ export const FilterModeHint: FC = () => {
         </p>
         <a href={withBase("filter-mode")}>
           <Button className="flex gap-2">
-            <ArrowBigRightDashIcon />
+            <ArrowRight />
             <span>Go to Filter Mode</span>
           </Button>
         </a>

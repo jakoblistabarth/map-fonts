@@ -20,6 +20,9 @@ importers:
       '@duckdb/node-api':
         specifier: 1.5.0-r.1
         version: 1.5.0-r.1
+      '@nanostores/react':
+        specifier: ^2.0.1
+        version: 2.0.1(nanostores@1.5.3)(react@19.2.4)
       '@tailwindcss/vite':
         specifier: ^4.3.3
         version: 4.3.3(vite@7.3.1(@types/node@25.5.0)(jiti@2.7.0)(lightningcss@1.32.0)(yaml@2.8.2))
@@ -59,6 +62,9 @@ importers:
       maplibre-gl:
         specifier: ^5.20.0
         version: 5.20.0
+      nanostores:
+        specifier: ^1.5.3
+        version: 1.5.3
       radix-ui:
         specifier: ^1.6.7
         version: 1.6.7(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
@@ -928,6 +934,13 @@ packages:
     peerDependenciesMeta:
       '@cfworker/json-schema':
         optional: true
+
+  '@nanostores/react@2.0.1':
+    resolution: {integrity: sha512-txbZTd+7/hnO7FhtF8Pmr+cu0ThdCuCnOyEEh0DsEM2Hp9PfOa5EY4uj3wpZpypSzp5BuqDgf2AxVAKoUIWOFQ==}
+    engines: {node: ^22.0.0 || ^24.0.0 || >=26.0.0}
+    peerDependencies:
+      nanostores: ^1.2.0
+      react: '>=18.0.0'
 
   '@nodelib/fs.scandir@2.1.5':
     resolution: {integrity: sha512-vq24Bq3ym5HEQm2NKCr3yXDwjc7vTsEThRDnkp2DK9p1uqLR+DHurm/NOTo0KG7HYHU7eppKZj3MyqYuMBf62g==}
@@ -4124,6 +4137,10 @@ packages:
     engines: {node: ^10 || ^12 || ^13.7 || ^14 || >=15.0.1}
     hasBin: true
 
+  nanostores@1.5.3:
+    resolution: {integrity: sha512-rQLB6eV4f2AW/n3L0JmwCROpaisYy9EDEADvEFSd1C/qG8hB6O5TPlh9A791JRbJr4CnMQBzptDcvD9OR1+6WA==}
+    engines: {node: ^20.0.0 || >=22.0.0}
+
   natural-compare@1.4.0:
     resolution: {integrity: sha512-OWND8ei3VtNC9h7V60qff3SVobHr996CTwgxubgyQYEpg290h9J0buyECNNJexkFm5sOajh5G116RYA1c8ZMSw==}
 
@@ -6452,6 +6469,11 @@ snapshots:
       zod-to-json-schema: 3.25.2(zod@3.25.76)
     transitivePeerDependencies:
       - supports-color
+
+  '@nanostores/react@2.0.1(nanostores@1.5.3)(react@19.2.4)':
+    dependencies:
+      nanostores: 1.5.3
+      react: 19.2.4
 
   '@nodelib/fs.scandir@2.1.5':
     dependencies:
@@ -10149,6 +10171,8 @@ snapshots:
   murmurhash-js@1.0.0: {}
 
   nanoid@3.3.11: {}
+
+  nanostores@1.5.3: {}
 
   natural-compare@1.4.0: {}
 

@@ -1,6 +1,7 @@
 ---
 import { Font } from "astro:assets";
 import "../styles/global.css";
+import { ClientRouter } from "astro:transitions";
 ---
 
 <!doctype html>
@@ -13,6 +14,7 @@ import "../styles/global.css";
     <meta name="generator" content={Astro.generator} />
     <title>Map Fonts</title>
     <Font cssVariable="--font-sans" />
+    <ClientRouter />
   </head>
   <body class="bg-background margin-0 font-sans">
     <slot />
