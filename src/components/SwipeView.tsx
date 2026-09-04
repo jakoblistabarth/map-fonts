@@ -12,6 +12,18 @@ import mapEurope from "../assets/map_europe.png";
 import { useDragGesture } from "../hooks/useDragGesture";
 import { useLazyFont } from "../hooks/useLazyFont";
 import { useQueryManager } from "../hooks/useQueryManager";
+import { useSessionValue } from "../hooks/useSession";
+import {
+  $activeTab,
+  $customMapImage,
+  $discardedFamilies,
+  $labelColor,
+  $likedFonts,
+  $mapZoom,
+  $startFontFamilies,
+  $swipeCount,
+  type TabKey,
+} from "../stores/session";
 import type { Font } from "../types/font";
 import { withBase } from "../utils/base";
 import AboutDialog from "./AboutDialog";
@@ -36,7 +48,6 @@ type MapLabel = {
   style: MapLabelStyleKey;
 };
 
-type TabKey = "swipe" | "your-fonts";
 type SwipeDirection = "yes" | "no";
 
 type InfoCardKind = "tutorial" | "unlocked";
@@ -330,12 +341,15 @@ const ShortcutHint: FC<PropsWithChildren<{ label: string }>> = ({
  */
 const SwipeView: FC = () => {
   const manager = useQueryManager();
-  const [activeTab, setActiveTab] = useState<TabKey>("swipe");
-  const [swipeCount, setSwipeCount] = useState<number>(0);
-  const [likedFonts, setLikedFonts] = useState<Font[]>([]);
-  const [discardedFamilies, setDiscardedFamilies] = useState<Set<string>>(
-    new Set(),
-  );
+  const activeTab = useSessionValue($activeTab);
+  const swipeCount = useSessionValue($swipeCount);
+  const likedFonts = useSessionValue($likedFonts);
+  const discardedFamilies = useSessionValue($discardedFamilies);
+  const customMapImage = useSessionValue($customMapImage);
+  const labelColor = useSessionValue($labelColor);
+  const mapZoom = useSessionValue($mapZoom);
+  const startFontFamilies = useSessionValue($startFontFamilies);
+
   const [allFonts, setAllFonts] = useState<Font[]>([]);
   const [recommendations, setRecommendations] = useState<Font[]>([]);
   const [exitingCard, setExitingCard] = useState<ExitingCard | null>(null);
@@ -353,34 +367,27 @@ const SwipeView: FC = () => {
   // Side the top card was last dragged towards, so its overlay keeps its
   // colour while fading out as the card snaps back.
   const [dragDirection, setDragDirection] = useState<SwipeDirection>("yes");
-  const [customMapImage, setCustomMapImage] = useState<string | null>(null);
-  const [labelColor, setLabelColor] = useState<"black" | "white">("black");
-  const [mapZoom, setMapZoom] = useState(1);
   // Once the user moves a label, this layout is used for every card instead
   // of a random one per font.
   const [fixedLabels, setFixedLabels] = useState<MapLabel[] | null>(null);
   // Names the user typed in, by label id. Applied to every card.
   const [labelNames, setLabelNames] = useState<Record<string, string>>({});
 
-  const handleMapImageChange = (file: File | null) => {
-    setCustomMapImage((previous) => {
-      if (previous?.startsWith("blob:")) {
-        URL.revokeObjectURL(previous);
-      }
+  const setMapImage = (next: string | null) => {
+    const previous = $customMapImage.get();
+    if (previous?.startsWith("blob:")) {
+      URL.revokeObjectURL(previous);
+    }
+    $customMapImage.set(next);
+  };
 
-      return file ? URL.createObjectURL(file) : null;
-    });
+  const handleMapImageChange = (file: File | null) => {
+    setMapImage(file ? URL.createObjectURL(file) : null);
   };
 
   const resetMapImage = () => {
-    setCustomMapImage((previous) => {
-      if (previous?.startsWith("blob:")) {
-        URL.revokeObjectURL(previous);
-      }
-
-      return null;
-    });
-    setMapZoom(1);
+    setMapImage(null);
+    $mapZoom.set(1);
   };
 
   // True while the previously-swiped card is still flying off screen
@@ -413,18 +420,30 @@ const SwipeView: FC = () => {
       hasLoadedRef.current = true;
       manager
         .query("FROM family_metadata ORDER BY popularity DESC")
-        .then((result) => setAllFonts(result))
+        .then((result) => {
+          setAllFonts(result);
+          // Pick the starter deck once per session, not once per mount.
+          if (!$startFontFamilies.get()) {
+            $startFontFamilies.set(
+              getFixedStartFonts(result).map((font) => font.family),
+            );
+          }
+        })
         .catch((error) => console.error("Error loading families:", error));
     }
   }, [manager.isReady]);
 
-  // Memoized so this array keeps a stable identity across renders (it only
-  // needs to change when `allFonts` changes). It's used as a dependency of
-  // the recommendations effect below, so an unstable reference here would
-  // cause that effect to re-run on every render.
+  // Memoized so this array keeps a stable identity across renders. It's used as
+  // a dependency of the recommendations effect below, so an unstable reference
+  // here would cause that effect to re-run on every render. Resolved from the
+  // session-scoped family list rather than re-shuffled, so the deck the user
+  // swiped through is still the same deck after a trip to filter mode.
   const fixedStartFonts = useMemo(
-    () => getFixedStartFonts(allFonts),
-    [allFonts],
+    () =>
+      (startFontFamilies ?? [])
+        .map((family) => allFonts.find((font) => font.family === family))
+        .filter((font): font is Font => Boolean(font)),
+    [allFonts, startFontFamilies],
   );
 
   const currentIndex = swipeCount;
@@ -629,31 +648,31 @@ const SwipeView: FC = () => {
     direction: SwipeDirection,
     from: { x: number; y: number } = { x: 0, y: 0 },
   ) => {
-    if (isAnimating || !topEntry) return;
+    if (!currentFont || isAnimating || !topEntry) return;
     const { card } = topEntry;
     const labels = card.kind === "font" ? getMapLabelsForFont(card.font) : [];
 
-    if (card.kind === "font") {
-      const { font } = card;
-      if (direction === "yes") {
-        setLikedFonts((previous) =>
-          previous.some((f) => f.family === font.family)
-            ? previous
-            : [...previous, font],
-        );
-      } else {
-        setDiscardedFamilies((previous) => new Set([...previous, font.family]));
-      }
+    const font = currentFont;
 
-      // Optimistically drop the just-decided font from the recommendation
-      // preview so recommendations[0] is immediately correct for the next
-      // card, without waiting on the async re-ranking query below to catch
-      // up. The effect still runs afterwards and replaces this with a fully
-      // recomputed, better-ranked list.
-      setRecommendations((previous) =>
-        previous.filter((f) => f.family !== font.family),
+    if (direction === "yes") {
+      const previous = $likedFonts.get();
+      if (!previous.some((f) => f.family === font.family)) {
+        $likedFonts.set([...previous, font]);
+      }
+    } else {
+      $discardedFamilies.set(
+        new Set([...$discardedFamilies.get(), font.family]),
       );
     }
+
+    // Optimistically drop the just-decided font from the recommendation
+    // preview so recommendations[0] is immediately correct for the next
+    // card, without waiting on the async re-ranking query below to catch
+    // up. The effect still runs afterwards and replaces this with a fully
+    // recomputed, better-ranked list.
+    setRecommendations((previous) =>
+      previous.filter((f) => f.family !== font.family),
+    );
 
     exitIdRef.current += 1;
     setExitingCard({
@@ -670,7 +689,7 @@ const SwipeView: FC = () => {
     // into the current slot because it keeps the same DOM identity
     // (keyed by deck index) — only its slot/transform changes.
     if (card.kind === "font") {
-      setSwipeCount((previous) => previous + 1);
+      $swipeCount.set($swipeCount.get() + 1);
     } else {
       // Info cards leave like any other, but aren't a decision on a font.
       const { kind } = card;
@@ -976,7 +995,7 @@ const SwipeView: FC = () => {
           <button
             type="button"
             style={tabButtonStyle("swipe")}
-            onClick={() => setActiveTab("swipe")}
+            onClick={() => $activeTab.set("swipe")}
           >
             <span>Swipe</span>
           </button>
@@ -986,7 +1005,7 @@ const SwipeView: FC = () => {
             style={tabButtonStyle("your-fonts")}
             disabled={!selectionUnlocked}
             onClick={() => {
-              if (selectionUnlocked) setActiveTab("your-fonts");
+              if (selectionUnlocked) $activeTab.set("your-fonts");
             }}
           >
             <span>Your fonts</span>
@@ -1025,8 +1044,8 @@ const SwipeView: FC = () => {
               zoom={mapZoom}
               onImageChange={handleMapImageChange}
               onReset={resetMapImage}
-              onLabelColorChange={setLabelColor}
-              onZoomChange={setMapZoom}
+              onLabelColorChange={$labelColor.set}
+              onZoomChange={$mapZoom.set}
             />
           </div>
 
@@ -1125,7 +1144,7 @@ const SwipeView: FC = () => {
         >
           <SelectionView
             likedFonts={likedFonts}
-            setLikedFonts={setLikedFonts}
+            setLikedFonts={$likedFonts.set}
             recommendedFonts={recommendations}
           />
         </div>

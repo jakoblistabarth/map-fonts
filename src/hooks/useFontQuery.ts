@@ -1,14 +1,12 @@
 import { useCallback, useEffect, useState, useTransition } from "react";
+import { $metricRanges, $selectedTags } from "../stores/session";
 import type { Font } from "../types/font";
-import {
-  metricFilterQuery,
-  type MetricKey,
-  type MetricRanges,
-} from "../utils/metrics";
+import { metricFilterQuery, type MetricKey } from "../utils/metrics";
 import { useQueryManager } from "./useQueryManager";
+import { useSessionValue } from "./useSession";
 
 export type TagCategory = Record<string, string[]>;
-export type SelectedTags = Record<string, Set<string>>;
+export type { SelectedTags } from "../stores/session";
 
 /**
  * Hook that queries the font families matching the selected tags and the
@@ -20,20 +18,22 @@ export const useFontQuery = () => {
 
   const [families, setFamilies] = useState<Font[]>([]);
   const [, startTransition] = useTransition();
-  const [selectedTags, setSelectedTags] = useState<SelectedTags>({});
   const [tagsByCategory, setTagsByCategory] = useState<TagCategory>({});
-  const [metricRanges, setMetricRanges] = useState<MetricRanges>({});
+
+  // Read from session to preserve across navigation
+  const selectedTags = useSessionValue($selectedTags);
+  const metricRanges = useSessionValue($metricRanges);
 
   const setMetricRange = useCallback(
     (metric: MetricKey, range: [number, number] | undefined) => {
-      setMetricRanges((prev) => {
-        if (!range) {
-          const next = { ...prev };
-          delete next[metric];
-          return next;
-        }
-        return { ...prev, [metric]: range };
-      });
+      const prev = $metricRanges.get();
+      if (!range) {
+        const next = { ...prev };
+        delete next[metric];
+        $metricRanges.set(next);
+        return;
+      }
+      $metricRanges.set({ ...prev, [metric]: range });
     },
     [],
   );
@@ -74,15 +74,14 @@ export const useFontQuery = () => {
   };
 
   const toggleTag = useCallback((category: string, tag: string) => {
-    setSelectedTags((prev) => {
-      const categorySet = new Set(prev[category]);
-      if (categorySet.has(tag)) {
-        categorySet.delete(tag);
-      } else {
-        categorySet.add(tag);
-      }
-      return { ...prev, [category]: categorySet };
-    });
+    const prev = $selectedTags.get();
+    const categorySet = new Set(prev[category]);
+    if (categorySet.has(tag)) {
+      categorySet.delete(tag);
+    } else {
+      categorySet.add(tag);
+    }
+    $selectedTags.set({ ...prev, [category]: categorySet });
   }, []);
 
   const queryFamilies = async () => {

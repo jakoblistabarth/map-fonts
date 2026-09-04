@@ -1,16 +1,19 @@
-import { useState } from "react";
+import { withBase } from "@/utils/base";
+import { ArrowLeft } from "lucide-react";
 import { useFontQuery } from "../hooks/useFontQuery";
-import type { Font } from "../types/font";
+import { useSessionValue } from "../hooks/useSession";
+import { $previewFont } from "../stores/session";
 import DemoMap from "./DemoMap";
 import FontFilters from "./FontFilters";
 import FontResultList from "./FontResultList";
 import FontSample from "./FontSample";
-import { ArrowLeftCircle } from "lucide-react";
-import { withBase } from "@/utils/base";
+import Skeleton from "./Skeleton";
+import { Button } from "./ui/button";
 
 /** Component displays the filter mode interface for font selection and preview based on metrics (and tags?). */
 const FilterModeView = () => {
-  const [font, setFont] = useState<Font | null>(null);
+  const font = useSessionValue($previewFont);
+  const setFont = $previewFont.set;
   const {
     isReady,
     families,
@@ -34,8 +37,10 @@ const FilterModeView = () => {
         </a>
       </div>
       <div className="grid w-full grid-cols-1 gap-8 md:h-[50dvh] md:grid-cols-[1fr_2fr]">
-        {isReady && (
+        {isReady ? (
           <FontResultList families={families} font={font} setFont={setFont} />
+        ) : (
+          <Skeleton />
         )}
         <DemoMap font={font} />
       </div>
