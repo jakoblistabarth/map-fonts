@@ -394,9 +394,10 @@ const SwipeView: FC = () => {
 
   useEffect(() => {
     if (!cardArea) return;
-    const observer = new ResizeObserver(([entry]) =>
-      setCardWidth(entry.contentRect.width),
-    );
+    // The cards unmount on the "Your fonts" tab; keep their last width.
+    const observer = new ResizeObserver(([entry]) => {
+      if (entry.contentRect.width > 0) setCardWidth(entry.contentRect.width);
+    });
     observer.observe(cardArea);
     return () => observer.disconnect();
   }, [cardArea]);
@@ -956,9 +957,7 @@ const SwipeView: FC = () => {
         <div
           className="col-span-2 justify-self-center sm:col-span-1"
           style={{
-            width: cardWidth
-              ? `${cardWidth}px`
-              : "min(320px, calc(100vw - 1.5rem))",
+            width: `min(${cardWidth ?? 320}px, calc(100vw - 1.5rem))`,
             background: "#efefef",
             borderRadius: "999px",
             padding: "0.25rem",
