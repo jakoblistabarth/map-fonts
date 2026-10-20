@@ -12,6 +12,7 @@ import { useDragGesture } from "../hooks/useDragGesture";
 import { useLazyFont } from "../hooks/useLazyFont";
 import { useQueryManager } from "../hooks/useQueryManager";
 import type { Font } from "../types/font";
+import EditableMapLabel from "./EditableMapLabel";
 import PreviewControls from "./PreviewControls";
 import SelectionView from "./SelectionView";
 import Skeleton from "./Skeleton";
@@ -22,6 +23,8 @@ import SwipeProgressIndicator from "./SwipeProgressIndicator";
 type MapLabelStyleKey = "thin" | "regular" | "bold";
 
 type MapLabel = {
+  /** The label's original name, kept stable when the user renames it. */
+  id: string;
   name: string;
   top: string;
   left: string;
@@ -241,6 +244,7 @@ const createMapLabels = (): MapLabel[] => {
     }
 
     return {
+      id: name,
       name,
       left: `${left.toFixed(1)}%`,
       top: `${top.toFixed(1)}%`,
@@ -304,6 +308,11 @@ const SwipeView: FC = () => {
   const [customMapImage, setCustomMapImage] = useState<string | null>(null);
   const [labelColor, setLabelColor] = useState<"black" | "white">("black");
   const [mapZoom, setMapZoom] = useState(1);
+  // Once the user moves a label, this layout is used for every card instead
+  // of a random one per font.
+  const [fixedLabels, setFixedLabels] = useState<MapLabel[] | null>(null);
+  // Names the user typed in, by label id. Applied to every card.
+  const [labelNames, setLabelNames] = useState<Record<string, string>>({});
 
   const handleMapImageChange = (file: File | null) => {
     setCustomMapImage((previous) => {
@@ -488,6 +497,7 @@ const SwipeView: FC = () => {
 
   const getMapLabelsForFont = (font: Font | null) => {
     if (!font) return [];
+    if (fixedLabels) return fixedLabels;
 
     const key = getLabelKey(font);
     const cached = labelCacheRef.current.get(key);
@@ -496,6 +506,23 @@ const SwipeView: FC = () => {
     const nextLabels = createMapLabels();
     labelCacheRef.current.set(key, nextLabels);
     return nextLabels;
+  };
+
+  // Moving a label freezes the layout of the card it was moved on.
+  const moveLabel = (
+    font: Font,
+    id: string,
+    position: { top: string; left: string },
+  ) => {
+    setFixedLabels((previous) =>
+      (previous ?? getMapLabelsForFont(font)).map((label) =>
+        label.id === id ? { ...label, ...position } : label,
+      ),
+    );
+  };
+
+  const renameLabel = (id: string, name: string) => {
+    setLabelNames((previous) => ({ ...previous, [id]: name }));
   };
 
   const selectionUnlocked = swipeCount >= FIRST_UNLOCK_COUNT;
@@ -598,6 +625,9 @@ const SwipeView: FC = () => {
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (isDragging || isAnimating) return;
+      // Arrow keys move the caret while a label is being retyped.
+      if (event.target instanceof HTMLElement && event.target.isContentEditable)
+        return;
 
       if (event.key === "ArrowRight" || event.key === "ArrowUp") {
         event.preventDefault();
@@ -639,7 +669,11 @@ const SwipeView: FC = () => {
       ? "0 1px 2px rgba(255, 255, 255, 0.65)"
       : "0 1px 2px rgba(0, 0, 0, 0.7)";
 
-  const renderCardContent = (font: Font, labels: MapLabel[]) => (
+  const renderCardContent = (
+    font: Font,
+    labels: MapLabel[],
+    interactive = false,
+  ) => (
     <>
       <img
         src={currentMapImageSrc}
@@ -661,24 +695,21 @@ const SwipeView: FC = () => {
         }}
       />
       {labels.map((label) => (
-        <div
-          key={`${font.family}-${label.name}`}
+        <EditableMapLabel
+          key={label.id}
+          name={labelNames[label.id] ?? label.name}
+          top={label.top}
+          left={label.left}
+          interactive={interactive}
+          onMove={(position) => moveLabel(font, label.id, position)}
+          onRename={(name) => renameLabel(label.id, name)}
           style={{
-            position: "absolute",
-            top: label.top,
-            left: label.left,
-            transform: "translate(-50%, -50%)",
-            zIndex: 2,
             color: labelTextColor,
             textShadow: labelTextShadow,
-            whiteSpace: "nowrap",
-            pointerEvents: "none",
             fontFamily: font.family,
             ...mapLabelStyles[label.style],
           }}
-        >
-          {label.name}
-        </div>
+        />
       ))}
       <div className="absolute bottom-5 z-10 rounded-full bg-[#292929] px-5 py-2">
         <span className="text-taupe-50">{font.family}</span>
@@ -733,7 +764,7 @@ const SwipeView: FC = () => {
         }}
         {...(slot === 0 ? dragProps : {})}
       >
-        {renderCardContent(font, labels)}
+        {renderCardContent(font, labels, slot === 0)}
       </div>
     );
   };
