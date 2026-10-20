@@ -1,4 +1,4 @@
-import { HeartIcon, XIcon } from "lucide-react";
+import { ArrowLeftIcon, ArrowRightIcon, HeartIcon, XIcon } from "lucide-react";
 import React, {
   useEffect,
   useMemo,
@@ -6,12 +6,15 @@ import React, {
   useState,
   type CSSProperties,
   type FC,
+  type PropsWithChildren,
 } from "react";
 import mapEurope from "../assets/map_europe.png";
 import { useDragGesture } from "../hooks/useDragGesture";
 import { useLazyFont } from "../hooks/useLazyFont";
 import { useQueryManager } from "../hooks/useQueryManager";
 import type { Font } from "../types/font";
+import { withBase } from "../utils/base";
+import AboutDialog from "./AboutDialog";
 import EditableMapLabel from "./EditableMapLabel";
 import PreviewControls from "./PreviewControls";
 import SelectionView from "./SelectionView";
@@ -48,6 +51,12 @@ const FIRST_UNLOCK_COUNT = 10;
 const SWIPE_THRESHOLD = 110;
 const STACK_GAP = 18;
 const STACK_SCALE_STEP = 0.035;
+// Room kept above the cards for the progress bar, even once it is gone, so
+// the cards don't jump up when the selection unlocks.
+const PROGRESS_SPACE = "3.5rem";
+
+const HEADER_LINK_CLASS =
+  "text-sm font-medium text-[#3f3f3f] underline-offset-4 hover:text-black hover:underline";
 const CARD_TRANSITION =
   "transform 600ms cubic-bezier(0.4, 0, 0.6, 1), opacity 600ms cubic-bezier(0.4, 0, 0.6, 1)";
 
@@ -287,6 +296,20 @@ const getFixedStartFonts = (fonts: Font[]) => {
   return shuffle(allStartFonts).slice(0, 10);
 };
 
+/** Keycap showing the keyboard shortcut for a swipe button. Hidden on touch screens. */
+const ShortcutHint: FC<PropsWithChildren<{ label: string }>> = ({
+  label,
+  children,
+}) => (
+  <kbd
+    title={label}
+    aria-label={label}
+    className="flex size-8 items-center justify-center rounded-md border border-b-2 border-[#d9d9d6] bg-white text-[#6f6f6f] pointer-coarse:hidden"
+  >
+    {children}
+  </kbd>
+);
+
 /**
  * Component displays a list of font families as deck of cards for the user to swipe through.
  */
@@ -345,6 +368,18 @@ const SwipeView: FC = () => {
   // State rather than a ref, so the drag gesture re-binds its touch listener
   // when the top card changes.
   const [topCard, setTopCard] = useState<HTMLDivElement | null>(null);
+  // The tabs match the card's width, which follows the viewport height.
+  const [cardArea, setCardArea] = useState<HTMLDivElement | null>(null);
+  const [cardWidth, setCardWidth] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (!cardArea) return;
+    const observer = new ResizeObserver(([entry]) =>
+      setCardWidth(entry.contentRect.width),
+    );
+    observer.observe(cardArea);
+    return () => observer.disconnect();
+  }, [cardArea]);
 
   // Load the font list once the query manager is ready, but only once per mount.
   useEffect(() => {
@@ -646,7 +681,8 @@ const SwipeView: FC = () => {
     flex: 1,
     border: 0,
     borderRadius: "999px",
-    padding: "0.8rem 1rem",
+    padding: "0.55rem 1rem",
+    fontSize: "0.9rem",
     background: activeTab === tab ? "#3348af" : "transparent",
     color: activeTab === tab ? "#edece9" : "#6f6f6f",
     fontWeight: 600,
@@ -842,38 +878,49 @@ const SwipeView: FC = () => {
           }
         />
       )}
-      <div
-        style={{
-          position: "relative",
-          zIndex: 50,
-          flexShrink: 0,
-          width: "min(420px, calc(100vw - 1.5rem))",
-          maxWidth: "420px",
-          background: "#efefef",
-          borderRadius: "999px",
-          padding: "0.3rem",
-          display: "flex",
-          gap: "0.3rem",
-          boxShadow: "0 8px 22px rgba(0, 0, 0, 0.08)",
-        }}
-      >
-        <button
-          type="button"
-          style={tabButtonStyle("swipe")}
-          onClick={() => setActiveTab("swipe")}
+      {/* On narrow screens the two links sit on their own row above the tabs. */}
+      <div className="relative z-50 grid w-full shrink-0 grid-cols-2 items-center gap-x-6 gap-y-2 px-4 sm:grid-cols-[1fr_auto_1fr]">
+        <AboutDialog
+          triggerClassName={`${HEADER_LINK_CLASS} justify-self-start sm:justify-self-end`}
+        />
+        <a
+          href={withBase("filter-mode")}
+          className={`${HEADER_LINK_CLASS} justify-self-end sm:order-last sm:justify-self-start`}
         >
-          <span>Swipe</span>
-        </button>
-        <button
-          type="button"
-          style={tabButtonStyle("your-fonts")}
-          disabled={!selectionUnlocked}
-          onClick={() => {
-            if (selectionUnlocked) setActiveTab("your-fonts");
+          Filter mode
+        </a>
+        <div
+          className="col-span-2 justify-self-center sm:col-span-1"
+          style={{
+            width: cardWidth
+              ? `${cardWidth}px`
+              : "min(320px, calc(100vw - 1.5rem))",
+            background: "#efefef",
+            borderRadius: "999px",
+            padding: "0.25rem",
+            display: "flex",
+            gap: "0.25rem",
+            boxShadow: "0 8px 22px rgba(0, 0, 0, 0.08)",
           }}
         >
-          <span>Your fonts</span>
-        </button>
+          <button
+            type="button"
+            style={tabButtonStyle("swipe")}
+            onClick={() => setActiveTab("swipe")}
+          >
+            <span>Swipe</span>
+          </button>
+          <button
+            type="button"
+            style={tabButtonStyle("your-fonts")}
+            disabled={!selectionUnlocked}
+            onClick={() => {
+              if (selectionUnlocked) setActiveTab("your-fonts");
+            }}
+          >
+            <span>Your fonts</span>
+          </button>
+        </div>
       </div>
       {activeTab === "swipe" ? (
         <div
@@ -925,14 +972,8 @@ const SwipeView: FC = () => {
               padding: "0 1rem",
             }}
           >
-            {!selectionUnlocked && (
-              <SwipeProgressIndicator
-                swipeCount={swipeCount}
-                totalSwipes={FIRST_UNLOCK_COUNT}
-              />
-            )}
-
             <div
+              ref={setCardArea}
               style={{
                 position: "relative",
                 zIndex: 40,
@@ -942,9 +983,26 @@ const SwipeView: FC = () => {
                 aspectRatio: "2 / 3",
                 alignSelf: "center",
                 overflow: "visible",
+                marginTop: PROGRESS_SPACE,
                 marginBottom: `${STACK_GAP * 2}px`,
               }}
             >
+              {!selectionUnlocked && (
+                // Positioned against the cards so it matches their width.
+                <div
+                  style={{
+                    position: "absolute",
+                    left: 0,
+                    right: 0,
+                    bottom: "calc(100% + 0.75rem)",
+                  }}
+                >
+                  <SwipeProgressIndicator
+                    swipeCount={swipeCount}
+                    totalSwipes={FIRST_UNLOCK_COUNT}
+                  />
+                </div>
+              )}
               {stackEntries.map((entry) =>
                 renderStackCard(entry.font, entry.slot, entry.deckIndex),
               )}
@@ -965,13 +1023,19 @@ const SwipeView: FC = () => {
               )}
             </div>
 
-            <div style={{ display: "flex", gap: "0.75rem" }}>
+            <div className="flex items-center gap-3">
+              <ShortcutHint label="Left arrow">
+                <ArrowLeftIcon className="size-4" />
+              </ShortcutHint>
               <SwipeButton type="no" onClick={() => triggerSwipe("no")}>
                 <XIcon className="size-10 stroke-white" />
               </SwipeButton>
               <SwipeButton type="yes" onClick={() => triggerSwipe("yes")}>
                 <HeartIcon className="size-10 fill-white/5 stroke-white" />
               </SwipeButton>
+              <ShortcutHint label="Right arrow">
+                <ArrowRightIcon className="size-4" />
+              </ShortcutHint>
             </div>
           </div>
         </div>
