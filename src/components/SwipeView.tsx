@@ -16,6 +16,7 @@ import PreviewControls from "./PreviewControls";
 import SelectionView from "./SelectionView";
 import Skeleton from "./Skeleton";
 import SwipeButton from "./SwipeButton";
+import SwipeFeedback from "./SwipeFeedback";
 import SwipeProgressIndicator from "./SwipeProgressIndicator";
 
 type MapLabelStyleKey = "thin" | "regular" | "bold";
@@ -296,6 +297,10 @@ const SwipeView: FC = () => {
   const [allFonts, setAllFonts] = useState<Font[]>([]);
   const [recommendations, setRecommendations] = useState<Font[]>([]);
   const [exitingCard, setExitingCard] = useState<ExitingCard | null>(null);
+  const [feedback, setFeedback] = useState<{
+    id: number;
+    direction: SwipeDirection;
+  } | null>(null);
   const [customMapImage, setCustomMapImage] = useState<string | null>(null);
   const [labelColor, setLabelColor] = useState<"black" | "white">("black");
   const [mapZoom, setMapZoom] = useState(1);
@@ -551,6 +556,7 @@ const SwipeView: FC = () => {
       direction,
       phase: "start",
     });
+    setFeedback({ id: exitIdRef.current, direction });
 
     // Advance the deck immediately: the "next" card smoothly slides up
     // into the current slot because it keeps the same DOM identity
@@ -789,8 +795,22 @@ const SwipeView: FC = () => {
         height: "100dvh",
         overflow: "hidden",
         padding: "0.75rem 0 1rem",
+        // Own stacking context, so the feedback flash (z-index -1) sits
+        // behind all the content but above the page background.
+        isolation: "isolate",
       }}
     >
+      {feedback && (
+        <SwipeFeedback
+          key={feedback.id}
+          direction={feedback.direction}
+          onDone={() =>
+            setFeedback((current) =>
+              current?.id === feedback.id ? null : current,
+            )
+          }
+        />
+      )}
       <div
         style={{
           position: "relative",

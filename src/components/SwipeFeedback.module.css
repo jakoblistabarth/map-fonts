@@ -1,0 +1,65 @@
+.feedback {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+  background-color: color-mix(
+    in srgb,
+    var(--feedback-color) 7%,
+    var(--background)
+  );
+  opacity: 0;
+  animation: flash 900ms ease-out forwards;
+
+  &.yes {
+    --feedback-color: #3348af;
+    --feedback-drift: var(--feedback-tile-size);
+  }
+
+  &.no {
+    --feedback-color: #b33048;
+    --feedback-drift: calc(var(--feedback-tile-size) * -1);
+  }
+}
+
+/* Oversized so the rotated layer still covers every corner of the screen. */
+.pattern {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 150vmax;
+  height: 150vmax;
+  background-color: var(--feedback-color);
+  opacity: 0.12;
+  mask-image: var(--feedback-tile);
+  mask-size: var(--feedback-tile-size) var(--feedback-tile-size);
+  mask-repeat: repeat;
+  transform: translate(-50%, -50%) rotate(45deg);
+  /* Drifts towards the side the card is swiped to. */
+  animation: drift 900ms ease-out forwards;
+}
+
+@keyframes flash {
+  0% {
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes drift {
+  to {
+    transform: translate(calc(-50% + var(--feedback-drift)), -50%) rotate(45deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pattern {
+    animation: none;
+  }
+}
