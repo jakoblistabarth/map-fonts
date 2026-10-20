@@ -21,7 +21,8 @@ export const SwipeProgressIndicator: FC<Props> = ({
       }}
     >
       <div style={{ color: "#666", fontSize: "0.95rem" }}>
-        Swipe {remainingUnlockSwipes} more times!
+        Swipe {remainingUnlockSwipes} more{" "}
+        {remainingUnlockSwipes === 1 ? "time" : "times"}!
       </div>
       <div
         style={{

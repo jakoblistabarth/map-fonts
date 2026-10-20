@@ -22,6 +22,8 @@ import Skeleton from "./Skeleton";
 import SwipeButton from "./SwipeButton";
 import SwipeFeedback from "./SwipeFeedback";
 import SwipeProgressIndicator from "./SwipeProgressIndicator";
+import TutorialCard, { type TutorialLabel } from "./TutorialCard";
+import UnlockedCard from "./UnlockedCard";
 
 type MapLabelStyleKey = "thin" | "regular" | "bold";
 
@@ -37,9 +39,13 @@ type MapLabel = {
 type TabKey = "swipe" | "your-fonts";
 type SwipeDirection = "yes" | "no";
 
+type InfoCardKind = "tutorial" | "unlocked";
+/** A card in the deck: a font to decide on, or an info card. */
+type DeckCard = { kind: "font"; font: Font } | { kind: InfoCardKind };
+
 type ExitingCard = {
   id: number;
-  font: Font;
+  card: DeckCard;
   labels: MapLabel[];
   x: number;
   y: number;
@@ -48,6 +54,11 @@ type ExitingCard = {
 };
 
 const FIRST_UNLOCK_COUNT = 10;
+// Info cards, each shown before the font at the given deck position.
+const INFO_CARDS: { kind: InfoCardKind; beforeIndex: number }[] = [
+  { kind: "tutorial", beforeIndex: 0 },
+  { kind: "unlocked", beforeIndex: FIRST_UNLOCK_COUNT },
+];
 const SWIPE_THRESHOLD = 110;
 const STACK_GAP = 18;
 const STACK_SCALE_STEP = 0.035;
@@ -324,6 +335,15 @@ const SwipeView: FC = () => {
   const [allFonts, setAllFonts] = useState<Font[]>([]);
   const [recommendations, setRecommendations] = useState<Font[]>([]);
   const [exitingCard, setExitingCard] = useState<ExitingCard | null>(null);
+  // Info cards stay in the deck until they are swiped away.
+  const [dismissedInfoCards, setDismissedInfoCards] = useState<
+    ReadonlySet<InfoCardKind>
+  >(new Set());
+  const [tutorialLabel, setTutorialLabel] = useState<TutorialLabel>({
+    name: "Ardena",
+    top: "46%",
+    left: "66%",
+  });
   const [feedback, setFeedback] = useState<{
     id: number;
     direction: SwipeDirection;
@@ -437,6 +457,25 @@ const SwipeView: FC = () => {
   };
 
   const [currentFont, nextFont, thirdFont] = getStackFonts();
+
+  // The upcoming cards, top first. Each info card sits just before the font
+  // at its deck position until it is swiped away. Font cards are keyed by
+  // deck index and info cards by kind, so every card keeps its identity, and
+  // slides up, as the cards above it leave.
+  const deckEntries = [
+    { font: currentFont, index: currentIndex },
+    { font: nextFont, index: nextIndex },
+    { font: thirdFont, index: thirdIndex },
+  ]
+    .flatMap(({ font, index }): { card: DeckCard; key: string | number }[] => [
+      ...INFO_CARDS.filter(
+        (info) =>
+          info.beforeIndex === index && !dismissedInfoCards.has(info.kind),
+      ).map((info) => ({ card: { kind: info.kind }, key: info.kind })),
+      ...(font ? [{ card: { kind: "font" as const, font }, key: index }] : []),
+    ])
+    .slice(0, 3);
+  const topEntry = deckEntries[0];
 
   // Recompute the recommendation pool whenever the user's likes/dislikes
   // change. This deliberately does NOT depend on `currentFont`: once
@@ -584,34 +623,36 @@ const SwipeView: FC = () => {
     direction: SwipeDirection,
     from: { x: number; y: number } = { x: 0, y: 0 },
   ) => {
-    if (!currentFont || isAnimating) return;
+    if (isAnimating || !topEntry) return;
+    const { card } = topEntry;
+    const labels = card.kind === "font" ? getMapLabelsForFont(card.font) : [];
 
-    const font = currentFont;
-    const labels = getMapLabelsForFont(font);
+    if (card.kind === "font") {
+      const { font } = card;
+      if (direction === "yes") {
+        setLikedFonts((previous) =>
+          previous.some((f) => f.family === font.family)
+            ? previous
+            : [...previous, font],
+        );
+      } else {
+        setDiscardedFamilies((previous) => new Set([...previous, font.family]));
+      }
 
-    if (direction === "yes") {
-      setLikedFonts((previous) =>
-        previous.some((f) => f.family === font.family)
-          ? previous
-          : [...previous, font],
+      // Optimistically drop the just-decided font from the recommendation
+      // preview so recommendations[0] is immediately correct for the next
+      // card, without waiting on the async re-ranking query below to catch
+      // up. The effect still runs afterwards and replaces this with a fully
+      // recomputed, better-ranked list.
+      setRecommendations((previous) =>
+        previous.filter((f) => f.family !== font.family),
       );
-    } else {
-      setDiscardedFamilies((previous) => new Set([...previous, font.family]));
     }
-
-    // Optimistically drop the just-decided font from the recommendation
-    // preview so recommendations[0] is immediately correct for the next
-    // card, without waiting on the async re-ranking query below to catch
-    // up. The effect still runs afterwards and replaces this with a fully
-    // recomputed, better-ranked list.
-    setRecommendations((previous) =>
-      previous.filter((f) => f.family !== font.family),
-    );
 
     exitIdRef.current += 1;
     setExitingCard({
       id: exitIdRef.current,
-      font,
+      card,
       labels,
       x: from.x,
       y: from.y,
@@ -623,7 +664,13 @@ const SwipeView: FC = () => {
     // Advance the deck immediately: the "next" card smoothly slides up
     // into the current slot because it keeps the same DOM identity
     // (keyed by deck index) — only its slot/transform changes.
-    setSwipeCount((previous) => previous + 1);
+    if (card.kind === "font") {
+      setSwipeCount((previous) => previous + 1);
+    } else {
+      // Info cards leave like any other, but aren't a decision on a font.
+      const { kind } = card;
+      setDismissedInfoCards((previous) => new Set([...previous, kind]));
+    }
   };
 
   const {
@@ -632,7 +679,7 @@ const SwipeView: FC = () => {
     dragProps,
   } = useDragGesture({
     node: topCard,
-    canStart: () => Boolean(currentFont) && !isAnimating,
+    canStart: () => Boolean(topEntry) && !isAnimating,
     // Past the threshold the card flies off from where it was released,
     // otherwise the hook resets the offset and it snaps back.
     onEnd: ({ dx, dy }) => {
@@ -656,7 +703,7 @@ const SwipeView: FC = () => {
   }
 
   useEffect(() => {
-    if (activeTab !== "swipe" || !currentFont) return;
+    if (activeTab !== "swipe" || !topEntry) return;
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (isDragging || isAnimating) return;
@@ -675,7 +722,7 @@ const SwipeView: FC = () => {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [activeTab, currentFont, isDragging, isAnimating]);
+  }, [activeTab, topEntry?.key, currentFont, isDragging, isAnimating]);
 
   const tabButtonStyle = (tab: TabKey): CSSProperties => ({
     flex: 1,
@@ -753,13 +800,27 @@ const SwipeView: FC = () => {
     </>
   );
 
+  const renderInfoCard = (kind: InfoCardKind, interactive = false) =>
+    kind === "tutorial" ? (
+      <TutorialCard
+        mapImageSrc={currentMapImageSrc}
+        label={tutorialLabel}
+        onLabelChange={setTutorialLabel}
+        interactive={interactive}
+      />
+    ) : (
+      <UnlockedCard mapImageSrc={currentMapImageSrc} />
+    );
+
   // Renders a card that belongs to the live stack (current / next / third).
   // Keyed by its position in the deck array, so when swipeCount advances,
   // the element that was "next" keeps its identity and just animates its
   // transform into the "current" slot instead of popping.
-  const renderStackCard = (font: Font, slot: 0 | 1 | 2, deckIndex: number) => {
-    const labels = getMapLabelsForFont(font);
-
+  const renderStackCard = (
+    card: DeckCard,
+    slot: 0 | 1 | 2,
+    key: number | string,
+  ) => {
     const transform =
       slot === 0
         ? `translate3d(${dragOffset.x}px, ${dragOffset.y}px, 0) rotate(${dragOffset.x / 18}deg) scale(1)`
@@ -778,7 +839,7 @@ const SwipeView: FC = () => {
 
     return (
       <div
-        key={deckIndex}
+        key={key}
         ref={slot === 0 ? setTopCard : undefined}
         style={{
           position: "absolute",
@@ -800,7 +861,13 @@ const SwipeView: FC = () => {
         }}
         {...(slot === 0 ? dragProps : {})}
       >
-        {renderCardContent(font, labels, slot === 0)}
+        {card.kind === "font"
+          ? renderCardContent(
+              card.font,
+              getMapLabelsForFont(card.font),
+              slot === 0,
+            )
+          : renderInfoCard(card.kind, slot === 0)}
       </div>
     );
   };
@@ -809,7 +876,7 @@ const SwipeView: FC = () => {
   // can fly off and fade out on its own timeline without affecting the stack.
   const renderExitingCard = () => {
     if (!exitingCard) return null;
-    const { id, font, labels, x, y, phase } = exitingCard;
+    const { id, card, labels, x, y, phase } = exitingCard;
 
     const transform = `translate3d(${x}px, ${y}px, 0) rotate(${x / 18}deg) scale(1)`;
     const transition = phase === "exiting" ? CARD_TRANSITION : "none";
@@ -836,19 +903,16 @@ const SwipeView: FC = () => {
         }}
         onTransitionEnd={(event) => handleExitTransitionEnd(event, id)}
       >
-        {renderCardContent(font, labels)}
+        {card.kind === "font"
+          ? renderCardContent(card.font, labels)
+          : renderInfoCard(card.kind)}
       </div>
     );
   };
 
-  const stackEntries: { font: Font; slot: 0 | 1 | 2; deckIndex: number }[] = [];
-  if (currentFont)
-    stackEntries.push({ font: currentFont, slot: 0, deckIndex: currentIndex });
-  if (nextFont)
-    stackEntries.push({ font: nextFont, slot: 1, deckIndex: nextIndex });
-  if (thirdFont)
-    stackEntries.push({ font: thirdFont, slot: 2, deckIndex: thirdIndex });
-  stackEntries.sort((a, b) => b.slot - a.slot);
+  const stackEntries = deckEntries
+    .map((entry, slot) => ({ ...entry, slot: slot as 0 | 1 | 2 }))
+    .reverse();
 
   return (
     <div
@@ -912,6 +976,7 @@ const SwipeView: FC = () => {
           </button>
           <button
             type="button"
+            data-tab="your-fonts"
             style={tabButtonStyle("your-fonts")}
             disabled={!selectionUnlocked}
             onClick={() => {
@@ -935,6 +1000,7 @@ const SwipeView: FC = () => {
           }}
         >
           <div
+            data-tutorial-target="controls"
             style={{
               position: "fixed",
               left: "calc(50% - 220px - 12rem)",
@@ -987,7 +1053,7 @@ const SwipeView: FC = () => {
                 marginBottom: `${STACK_GAP * 2}px`,
               }}
             >
-              {!selectionUnlocked && (
+              {!selectionUnlocked && dismissedInfoCards.has("tutorial") && (
                 // Positioned against the cards so it matches their width.
                 <div
                   style={{
@@ -1004,10 +1070,10 @@ const SwipeView: FC = () => {
                 </div>
               )}
               {stackEntries.map((entry) =>
-                renderStackCard(entry.font, entry.slot, entry.deckIndex),
+                renderStackCard(entry.card, entry.slot, entry.key),
               )}
               {renderExitingCard()}
-              {!manager.isReady && (
+              {!topEntry && (
                 <div
                   style={{
                     position: "absolute",

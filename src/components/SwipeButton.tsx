@@ -10,6 +10,7 @@ const SwipeButton: FC<
   return (
     <button
       className={`${styles.swipeButton} ${type === "yes" ? styles.yes : styles.no}`}
+      data-swipe-button={type}
       onClick={onClick}
     >
       {children}
