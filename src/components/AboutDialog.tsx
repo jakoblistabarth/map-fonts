@@ -15,12 +15,17 @@ const AboutDialog: FC<{ triggerClassName?: string }> = ({
           Map Fonts
         </Dialog.Title>
         <Dialog.Description>
-          A prototype for a web app to find the right font for your map.
+          Do you sometimes feel lost when choosing the right font for your map?
         </Dialog.Description>
         <p>
           Swipe right on the fonts you like and left on the ones you
           don&rsquo;t. Each choice refines the next suggestions. After 10
           swipes, your selection unlocks under <em>Your fonts</em>.
+        </p>
+        <p>
+          This project was created by Jakob Listabarth and Sacha Schlumpf, two
+          cartographers passionate by graphic design and particularly curious
+          about typography.
         </p>
         <p className="text-sm text-[#6f6f6f]">
           Font data from the{" "}

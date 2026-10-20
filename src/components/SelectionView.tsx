@@ -23,8 +23,8 @@ const SelectionView: FC<Props> = ({
           <div>
             <h2 className="text-2xl font-bold text-[#304cb3]">Your fonts</h2>
             <p className="mt-1 text-[#6f6f6f]">
-              Our picks based on what you liked, followed by the fonts you
-              liked.
+              Recommended fonts based on similarity with the ones you liked,
+              followed by the fonts you liked.
             </p>
           </div>
           {likedFonts.length > 0 && (

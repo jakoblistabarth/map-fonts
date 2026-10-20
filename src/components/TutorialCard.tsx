@@ -7,8 +7,11 @@ export type TutorialLabel = { name: string; top: string; left: string };
 const ARROWS: Arrow[] = [
   {
     from: '[data-tutorial-anchor="controls"]',
+    // From under the start of the text, curving down to the card's left edge.
+    fromSide: "bottom",
+    fromAlong: 0.2,
     to: '[data-tutorial-target="controls"]',
-    bend: 0.2,
+    bend: -0.3,
     color: "#3f3f3f",
   },
   {
@@ -52,22 +55,22 @@ const TutorialCard: FC<{
     <div className="relative">
       <h2 className="text-xl font-bold text-[#304cb3]">How it works</h2>
       <p className="mt-1 text-sm">
-        Like or skip fonts to find the right one for your map. Swipe this card
-        away to start.
+        Like or dislike fonts. Based on your choices, we will recommend you
+        fonts you might enjoy.
       </p>
     </div>
 
     {/* Hidden where the preview controls sit off-screen. */}
     <p
       data-tutorial-anchor="controls"
-      className="relative mt-6 ml-10 max-w-[65%] text-sm max-[51.5rem]:hidden"
+      className="relative mt-6 max-w-[65%] text-sm max-[51.5rem]:hidden"
     >
       Change the label colour, use your own map or zoom in.
     </p>
 
     <p
       data-tutorial-anchor="labels"
-      className="relative mt-auto max-w-[55%] text-sm"
+      className="relative mt-auto max-w-[65%] text-sm"
     >
       Drag a label to move it. Click it to rename it.
     </p>
@@ -77,13 +80,13 @@ const TutorialCard: FC<{
         data-tutorial-anchor="dislike"
         className="justify-self-end text-[#b33048]"
       >
-        Not for me
+        Dislike
       </span>
       <span
         data-tutorial-anchor="like"
         className="justify-self-start text-[#3348af]"
       >
-        Love it
+        Like
       </span>
     </div>
     <div data-tutorial-target="label-demo" className="contents">

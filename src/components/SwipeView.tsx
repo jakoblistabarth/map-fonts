@@ -20,7 +20,7 @@ import PreviewControls from "./PreviewControls";
 import SelectionView from "./SelectionView";
 import Skeleton from "./Skeleton";
 import SwipeButton from "./SwipeButton";
-import SwipeFeedback from "./SwipeFeedback";
+import SwipeOverlay from "./SwipeOverlay";
 import SwipeProgressIndicator from "./SwipeProgressIndicator";
 import TutorialCard, { type TutorialLabel } from "./TutorialCard";
 import UnlockedCard from "./UnlockedCard";
@@ -106,6 +106,10 @@ const LABEL_GAP = 8;
 
 const clamp = (value: number, min: number, max: number) =>
   Math.min(max, Math.max(min, value));
+
+/** How far a horizontal offset is towards deciding a card, from 0 to 1. */
+const swipeProgress = (dx: number) =>
+  Math.min(Math.abs(dx) / SWIPE_THRESHOLD, 1);
 
 const getLabelMetrics = (name: string, style: MapLabelStyleKey) => {
   const fontSize = Number.parseFloat(
@@ -341,13 +345,14 @@ const SwipeView: FC = () => {
   >(new Set());
   const [tutorialLabel, setTutorialLabel] = useState<TutorialLabel>({
     name: "Ardena",
-    top: "46%",
-    left: "66%",
+    // Measured from the bottom, like the caption it sits just above, so the
+    // arrow between them keeps its length on any card height.
+    top: "calc(100% - 215px)",
+    left: "68%",
   });
-  const [feedback, setFeedback] = useState<{
-    id: number;
-    direction: SwipeDirection;
-  } | null>(null);
+  // Side the top card was last dragged towards, so its overlay keeps its
+  // colour while fading out as the card snaps back.
+  const [dragDirection, setDragDirection] = useState<SwipeDirection>("yes");
   const [customMapImage, setCustomMapImage] = useState<string | null>(null);
   const [labelColor, setLabelColor] = useState<"black" | "white">("black");
   const [mapZoom, setMapZoom] = useState(1);
@@ -660,7 +665,6 @@ const SwipeView: FC = () => {
       direction,
       phase: "start",
     });
-    setFeedback({ id: exitIdRef.current, direction });
 
     // Advance the deck immediately: the "next" card smoothly slides up
     // into the current slot because it keeps the same DOM identity
@@ -681,6 +685,9 @@ const SwipeView: FC = () => {
   } = useDragGesture({
     node: topCard,
     canStart: () => Boolean(topEntry) && !isAnimating,
+    onMove: ({ dx }) => {
+      if (dx !== 0) setDragDirection(dx > 0 ? "yes" : "no");
+    },
     // Past the threshold the card flies off from where it was released,
     // otherwise the hook resets the offset and it snaps back.
     onEnd: ({ dx, dy }) => {
@@ -743,9 +750,7 @@ const SwipeView: FC = () => {
     opacity: tab === "your-fonts" && !selectionUnlocked ? 0.45 : 1,
   });
 
-  const liveProgress = isDragging
-    ? Math.min(Math.abs(dragOffset.x) / SWIPE_THRESHOLD, 1)
-    : 0;
+  const liveProgress = isDragging ? swipeProgress(dragOffset.x) : 0;
   const currentMapImageSrc = customMapImage ?? mapEurope.src;
   const labelTextColor = labelColor === "black" ? "#1b1b1b" : "#ffffff";
   const labelTextShadow =
@@ -869,6 +874,13 @@ const SwipeView: FC = () => {
               slot === 0,
             )
           : renderInfoCard(card.kind, slot === 0)}
+        {slot === 0 && card.kind === "font" && (
+          <SwipeOverlay
+            direction={dragDirection}
+            opacity={swipeProgress(dragOffset.x)}
+            animated={!isDragging}
+          />
+        )}
       </div>
     );
   };
@@ -907,6 +919,15 @@ const SwipeView: FC = () => {
         {card.kind === "font"
           ? renderCardContent(card.font, labels)
           : renderInfoCard(card.kind)}
+        {card.kind === "font" && (
+          // Already full when released past the threshold; fills in quickly
+          // after a button or key press.
+          <SwipeOverlay
+            direction={exitingCard.direction}
+            opacity={swipeProgress(x)}
+            animated
+          />
+        )}
       </div>
     );
   };
@@ -927,22 +948,8 @@ const SwipeView: FC = () => {
         height: "100dvh",
         overflow: "hidden",
         padding: "0.75rem 0 1rem",
-        // Own stacking context, so the feedback flash (z-index -1) sits
-        // behind all the content but above the page background.
-        isolation: "isolate",
       }}
     >
-      {feedback && (
-        <SwipeFeedback
-          key={feedback.id}
-          direction={feedback.direction}
-          onDone={() =>
-            setFeedback((current) =>
-              current?.id === feedback.id ? null : current,
-            )
-          }
-        />
-      )}
       {/* On narrow screens the two links sit on their own row above the tabs. */}
       <div className="relative z-50 grid w-full shrink-0 grid-cols-2 items-center gap-x-6 gap-y-2 px-4 sm:grid-cols-[1fr_auto_1fr]">
         <AboutDialog

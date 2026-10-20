@@ -1,8 +1,17 @@
 import { useEffect, useRef, useState, type FC } from "react";
 
+type Side = "top" | "bottom" | "left" | "right";
+
 export type Arrow = {
   /** Element on the card the arrow starts from. */
   from: string;
+  /** Side of `from` the arrow leaves from; by default, the side facing `to`. */
+  fromSide?: Side;
+  /**
+   * Where along `fromSide` the arrow leaves, from 0 (left or top end) to 1
+   * (right or bottom end). Defaults to the middle.
+   */
+  fromAlong?: number;
   /** Element the arrow points at, on the card or elsewhere on the page. */
   to: string;
   /** How far the curve bows out, relative to the arrow's length. */
@@ -29,6 +38,26 @@ const edgeTowards = ({ center, halfWidth, halfHeight }: Box, target: Point) => {
     dy ? (halfHeight + ARROW_GAP) / Math.abs(dy) : Infinity,
   );
   return { x: center.x + dx * t, y: center.y + dy * t };
+};
+
+/** A point on one of the box's sides, pushed out by the arrow gap. */
+const pointOnSide = (
+  { center, halfWidth, halfHeight }: Box,
+  side: Side,
+  along: number,
+) => {
+  const x = center.x + (along * 2 - 1) * halfWidth;
+  const y = center.y + (along * 2 - 1) * halfHeight;
+  switch (side) {
+    case "top":
+      return { x, y: center.y - halfHeight - ARROW_GAP };
+    case "bottom":
+      return { x, y: center.y + halfHeight + ARROW_GAP };
+    case "left":
+      return { x: center.x - halfWidth - ARROW_GAP, y };
+    case "right":
+      return { x: center.x + halfWidth + ARROW_GAP, y };
+  }
 };
 
 /** Shortens the segment `start` → `end` so it ends inside the card. */
@@ -131,7 +160,9 @@ const measureArrows = (root: HTMLElement, arrows: Arrow[]) => {
     const to = toElement && toLocal(toElement);
     if (!from || !to) return [];
 
-    const start = edgeTowards(from, to.center);
+    const start = arrow.fromSide
+      ? pointOnSide(from, arrow.fromSide, arrow.fromAlong ?? 0.5)
+      : edgeTowards(from, to.center);
     const end = clampToCard(start, edgeTowards(to, from.center), width, height);
     if (Math.hypot(end.x - start.x, end.y - start.y) < MIN_ARROW_LENGTH) {
       return [];
