@@ -16,6 +16,9 @@ const SelectionView: FC<Props> = ({
   setLikedFonts,
   recommendedFonts,
 }) => {
+  const selectedFonts =
+    likedFonts.length > 0 ? [...recommendedFonts, ...likedFonts] : [];
+
   return (
     <div className="mx-auto flex max-w-5xl flex-col gap-15 px-5 pt-5 md:pt-10">
       <section className="flex flex-col gap-6">
@@ -64,22 +67,24 @@ const SelectionView: FC<Props> = ({
           <div className="text-[#777]">No liked fonts yet.</div>
         )}
       </section>
-      <section className="flex flex-col items-center gap-5">
-        <a
-          href={`https://fonts.google.com/share?selection.family=${[...recommendedFonts, ...likedFonts].map((font) => font.family.replace(/ /g, "+")).join("|")}`}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <SelectionButton className="flex gap-5">
-            <DownloadIcon className="size-5 self-center" />
-            Get fonts ({[...recommendedFonts, ...likedFonts].length})
-          </SelectionButton>
-        </a>
-        <p className="max-w-xl">
-          You can download the selected fonts from Google Fonts to use them in
-          your GIS or graphic software.
-        </p>
-      </section>
+      {selectedFonts.length > 0 && (
+        <section className="flex flex-col items-center gap-5">
+          <a
+            href={`https://fonts.google.com/share?selection.family=${[...recommendedFonts, ...likedFonts].map((font) => font.family.replace(/ /g, "+")).join("|")}`}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <SelectionButton className="flex gap-5">
+              <DownloadIcon className="size-5 self-center" />
+              Get fonts ({selectedFonts.length})
+            </SelectionButton>
+          </a>
+          <p className="max-w-xl">
+            You can download the selected fonts from Google Fonts to use them in
+            your GIS or graphic software.
+          </p>
+        </section>
+      )}
       <section className="mx-auto max-w-prose">
         <FilterModeHint />
       </section>
